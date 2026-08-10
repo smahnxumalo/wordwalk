@@ -1,0 +1,4102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>WordWalk — Complete App</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 16px;
+        }
+
+        h1, .room-title, .comp-title, .detail-title, .p-title, .wh-title,
+        .world-card .w-name, .room-card .r-name, .obs-info .obs-label,
+        .action-container .action-puzzle .action-verbs .verb-line,
+        .landing-title {
+            font-family: 'Fraunces', serif;
+        }
+
+        .phone {
+            width: 375px;
+            height: 780px;
+            background: #f5f0ea;
+            border-radius: 36px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            border: 1px solid #333;
+        }
+
+        .screen {
+            position: absolute;
+            inset: 0;
+            display: none;
+            flex-direction: column;
+            padding: 20px 18px 24px;
+            background: #f5f0ea;
+            overflow-y: auto;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .screen::-webkit-scrollbar {
+            width: 0;
+        }
+        .screen {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .header .back {
+            background: none;
+            border: none;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 4px 6px;
+            color: #3a2a1a;
+            font-family: inherit;
+        }
+
+        .header .back:active {
+            opacity: 0.5;
+        }
+
+        .header .title {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: #2a1a0a;
+            flex: 1;
+        }
+
+        .header .walk-badge {
+            font-size: 11px;
+            color: #888;
+            background: rgba(0, 0, 0, 0.06);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(251, 244, 235, 0.96);
+            backdrop-filter: blur(6px);
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            display: none;
+            justify-content: space-around;
+            padding: 8px 4px 14px;
+            z-index: 100;
+        }
+
+        .bottom-nav.show {
+            display: flex;
+        }
+
+        .bottom-nav .nav-btn {
+            background: none;
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            color: #999;
+            font-size: 9px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            padding: 4px 6px;
+            transition: color 0.2s ease;
+        }
+
+        .bottom-nav .nav-btn.active {
+            color: #3a2a1a;
+        }
+
+        .bottom-nav .nav-btn .nav-icon {
+            font-size: 20px;
+            line-height: 1.2;
+        }
+
+        .bottom-nav .nav-btn .nav-label {
+            font-size: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .kitchen-room {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+        }
+
+        .kitchen-room .room-label {
+            font-size: 13px;
+            color: #888;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .kitchen-room .room-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #2a1a0a;
+            margin-bottom: 4px;
+        }
+
+        .kitchen-room .room-desc {
+            font-size: 15px;
+            color: #666;
+            text-align: center;
+            max-width: 260px;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+
+        .kitchen-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 320px;
+            margin: 6px auto;
+        }
+
+        .kitchen-grid .zone {
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid rgba(0, 0, 0, 0.06);
+            border-radius: 16px;
+            padding: 14px 4px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .kitchen-grid .zone:active {
+            background: rgba(200, 180, 160, 0.3);
+            transform: scale(0.94);
+        }
+
+        .kitchen-grid .zone .z-emoji {
+            font-size: 32px;
+            line-height: 1.2;
+        }
+
+        .kitchen-grid .zone .z-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #555;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .kitchen-grid .zone .z-sub {
+            font-size: 9px;
+            color: #999;
+        }
+
+        .door-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            border-radius: 36px;
+            overflow: hidden;
+        }
+
+        .door-overlay.show {
+            display: flex;
+        }
+
+        .door-overlay .door-container {
+            position: relative;
+            width: 200px;
+            height: 260px;
+            perspective: 800px;
+        }
+
+        .door-overlay .door-container .door {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .door-overlay .door-container .door.open {
+            transform: rotateY(-28deg) scale(0.95);
+        }
+
+        .door-overlay .door-container .door .door-face {
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            background: linear-gradient(145deg, #d4c8b8, #b8a898);
+            border: 3px solid #8a7a6a;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.1), 0 4px 20px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            backface-visibility: hidden;
+            transition: background 0.3s ease;
+        }
+
+        .door-overlay .door-container .door .door-face.tone-cold {
+            background: linear-gradient(145deg, #cfe0e6, #a9c2cc);
+            border-color: #7fa3ae;
+        }
+        .door-overlay .door-container .door .door-face.tone-warm {
+            background: linear-gradient(145deg, #e8c9a8, #cf9f6f);
+            border-color: #a97a48;
+        }
+        .door-overlay .door-container .door .door-face.tone-neutral {
+            background: linear-gradient(145deg, #d4c8b8, #b8a898);
+            border-color: #8a7a6a;
+        }
+
+        .door-overlay .door-container .door .door-face .handle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 40px;
+            background: linear-gradient(145deg, #c0a888, #a08870);
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+            border: 1px solid #8a7a6a;
+        }
+
+        .door-overlay .door-container .door .door-face .handle::after {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 4px;
+            height: 4px;
+            background: #6a5a4a;
+            border-radius: 50%;
+        }
+
+        .door-overlay .door-container .door .door-back {
+            position: absolute;
+            inset: 0;
+            border-radius: 12px;
+            background: #2a1a0a;
+            transform: rotateY(180deg);
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            border: 3px solid #4a3a2a;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .door-overlay .door-container .door .door-back .light {
+            position: absolute;
+            inset: 10%;
+            border-radius: 8px;
+            background: radial-gradient(ellipse at center, rgba(255, 200, 150, 0.15), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.6s ease 0.3s;
+        }
+
+        .door-overlay .door-container .door.open .door-back .light {
+            opacity: 1;
+        }
+
+        .door-overlay .door-label {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+            opacity: 0;
+            transition: opacity 0.4s ease 0.6s;
+        }
+
+        .door-overlay .door-label.show {
+            opacity: 1;
+        }
+
+        .walk-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 8px;
+            padding-bottom: 60px;
+        }
+
+        .walk-container .walk-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .walk-container .walk-header .wh-emoji {
+            font-size: 40px;
+            flex-shrink: 0;
+        }
+
+        .walk-container .walk-header .wh-title {
+            font-family: 'Fraunces', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: #2a1a0a;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .walk-container .walk-header .wh-badge {
+            font-size: 11px;
+            color: #888;
+            background: rgba(0, 0, 0, 0.06);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            margin-left: auto;
+            flex-shrink: 0;
+            transition: all 0.4s ease;
+        }
+
+        .walk-container .walk-scene {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            border: 2px solid rgba(0, 0, 0, 0.04);
+            padding: 24px 20px;
+            min-height: 240px;
+            position: relative;
+            transition: border-color 0.5s ease;
+        }
+
+        .walk-container .walk-scene .scene-label {
+            position: absolute;
+            top: 14px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 600;
+            color: #aaa;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 1;
+            transition: opacity 0.6s ease;
+        }
+
+        .walk-container .walk-scene .scene-label.hidden {
+            opacity: 0;
+        }
+
+        .walk-container .walk-scene .scene-emoji-grid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
+        }
+
+        .walk-container .walk-scene .scene-emoji-grid .row {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .walk-container .walk-scene .scene-emoji-grid .row .item {
+            font-size: 52px;
+            display: inline-block;
+            cursor: default;
+            user-select: none;
+            transition: transform 0.3s ease, opacity 0.6s ease;
+            opacity: 0;
+            transform: scale(0.8);
+            padding: 4px 8px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .walk-container .walk-scene .scene-emoji-grid .row .item.fade-in {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .walk-container .walk-scene .scene-emoji-grid .row .item .item-label {
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 600;
+            color: #3a2a1a;
+            background: rgba(255, 255, 255, 0.92);
+            padding: 3px 14px;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            white-space: nowrap;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .walk-container .walk-scene .scene-emoji-grid .row .item .item-label.show {
+            opacity: 1;
+        }
+
+        .walk-container .companion-bubble {
+            margin-top: 14px;
+            padding: 12px 16px;
+            background: rgba(58, 42, 26, 0.04);
+            border-radius: 14px;
+            border-left: 2px solid rgba(58, 42, 26, 0.15);
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.6s ease, max-height 0.6s ease, padding 0.4s ease, margin 0.4s ease;
+            padding: 0 16px;
+            margin-top: 0;
+        }
+
+        .walk-container .companion-bubble.show {
+            opacity: 1;
+            max-height: 160px;
+            padding: 12px 16px;
+            margin-top: 14px;
+        }
+
+        .walk-container .companion-bubble .companion-text {
+            font-size: 15px;
+            color: #3a2a1a;
+            line-height: 1.6;
+        }
+
+        .walk-container .companion-bubble .companion-text .speaker-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .walk-container .companion-bubble .companion-text .line {
+            display: block;
+            opacity: 0;
+            transform: translateY(6px);
+            animation: fadeUp 0.5s ease forwards;
+        }
+
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .walk-container .walk-footer {
+            margin-top: 14px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .parts-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 8px;
+            padding-bottom: 60px;
+        }
+
+        .parts-container .object-selector {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 4px 0 12px;
+            flex-shrink: 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .parts-container .object-selector::-webkit-scrollbar {
+            display: none;
+        }
+
+        .parts-container .object-selector .obj-chip {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(0, 0, 0, 0.06);
+            border-radius: 30px;
+            padding: 6px 14px 6px 10px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #888;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .parts-container .object-selector .obj-chip:active {
+            transform: scale(0.94);
+        }
+
+        .parts-container .object-selector .obj-chip .chip-emoji {
+            font-size: 18px;
+        }
+
+        .parts-container .object-selector .obj-chip.active {
+            background: rgba(58, 42, 26, 0.1);
+            border-color: #3a2a1a;
+            color: #3a2a1a;
+        }
+
+        .parts-container .object-selector .obj-chip .chip-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .parts-container .parts-scene {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            border: 2px solid rgba(0, 0, 0, 0.04);
+            padding: 16px 20px;
+            min-height: 220px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .parts-container .parts-scene .scene-object-label {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            font-weight: 600;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            opacity: 1;
+            transition: opacity 0.4s ease;
+        }
+
+        .parts-container .parts-scene .scene-object-label.hidden {
+            opacity: 0;
+        }
+
+        .parts-container .parts-scene .fridge-diagram {
+            position: relative;
+            width: 100%;
+            max-width: 180px;
+            height: 200px;
+            margin: 0 auto;
+            transition: all 0.4s ease;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 18%;
+            border-radius: 4px;
+            background: rgba(200, 190, 180, 0.2);
+            border: 2px solid rgba(200, 190, 180, 0.4);
+            transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 600;
+            color: #888;
+            letter-spacing: 0.04em;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part .part-label {
+            opacity: 0.4;
+            transition: opacity 0.3s ease;
+            font-size: 8px;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part:hover .part-label {
+            opacity: 0.8;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part-top {
+            top: 4%;
+            height: 12%;
+            border-radius: 4px 4px 0 0;
+            background: rgba(200, 190, 180, 0.15);
+            border-color: rgba(200, 190, 180, 0.3);
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part-door {
+            top: 4%;
+            height: 62%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 84%;
+            background: rgba(200, 190, 180, 0.05);
+            border-color: rgba(200, 190, 180, 0.2);
+            border-style: dashed;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part-door .part-label {
+            opacity: 0.1;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part-shelf-1 {
+            top: 20%;
+            height: 10%;
+            background: rgba(180, 200, 210, 0.2);
+            border-color: rgba(180, 200, 210, 0.4);
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part-shelf-2 {
+            top: 34%;
+            height: 10%;
+            background: rgba(180, 200, 210, 0.2);
+            border-color: rgba(180, 200, 210, 0.4);
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part-drawer {
+            top: 48%;
+            height: 16%;
+            background: rgba(200, 220, 200, 0.2);
+            border-color: rgba(200, 220, 200, 0.4);
+            border-radius: 0 0 4px 4px;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part.highlight {
+            background: rgba(58, 42, 26, 0.15) !important;
+            border-color: #3a2a1a !important;
+            border-width: 3px;
+            transform: translateX(-50%) scale(1.04);
+            z-index: 2;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part.highlight .part-label {
+            opacity: 1;
+            color: #3a2a1a;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part.dimmed {
+            opacity: 0.15;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part.dimmed .part-label {
+            opacity: 0;
+        }
+
+        .parts-container .parts-scene .fridge-diagram .part.part-door.dimmed {
+            opacity: 0.05;
+        }
+
+        .parts-container .parts-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px 8px;
+            justify-content: center;
+            margin-top: 10px;
+            padding: 4px 0;
+        }
+
+        .parts-container .parts-list .part-chip {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 500;
+            color: #888;
+            background: rgba(255, 255, 255, 0.4);
+            border: 1.5px solid rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .parts-container .parts-list .part-chip:active {
+            transform: scale(0.94);
+        }
+
+        .parts-container .parts-list .part-chip.active {
+            background: rgba(58, 42, 26, 0.1);
+            border-color: #3a2a1a;
+            color: #3a2a1a;
+        }
+
+        .parts-container .companion-bubble {
+            margin-top: 10px;
+            padding: 10px 16px;
+            background: rgba(58, 42, 26, 0.04);
+            border-radius: 14px;
+            border-left: 2px solid rgba(58, 42, 26, 0.15);
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.6s ease, max-height 0.6s ease, padding 0.4s ease, margin 0.4s ease;
+            padding: 0 16px;
+            margin-top: 0;
+        }
+
+        .parts-container .companion-bubble.show {
+            opacity: 1;
+            max-height: 140px;
+            padding: 10px 16px;
+            margin-top: 10px;
+        }
+
+        .parts-container .companion-bubble .companion-text {
+            font-size: 14px;
+            color: #3a2a1a;
+            line-height: 1.6;
+        }
+
+        .parts-container .companion-bubble .companion-text .speaker-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .parts-container .companion-bubble .companion-text .line {
+            display: block;
+            opacity: 0;
+            transform: translateY(6px);
+            animation: fadeUp 0.5s ease forwards;
+        }
+
+        .parts-container .parts-footer {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .status-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 8px;
+            padding-bottom: 60px;
+        }
+
+        .status-container .status-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 2px;
+        }
+
+        .status-container .status-header .sh-emoji {
+            font-size: 36px;
+        }
+
+        .status-container .status-header .sh-title {
+            font-family: 'Fraunces', serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: #2a1a0a;
+        }
+
+        .status-container .status-header .sh-badge {
+            font-size: 10px;
+            color: #888;
+            background: rgba(0, 0, 0, 0.06);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            margin-left: auto;
+        }
+
+        .status-container .status-subtitle {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+            font-style: italic;
+        }
+
+        .status-container .observation-deck {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            padding-bottom: 8px;
+        }
+
+        .status-container .observation-deck .obs-card {
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 14px;
+            border: 2px solid rgba(0, 0, 0, 0.04);
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-height: 52px;
+        }
+
+        .status-container .observation-deck .obs-card:active {
+            transform: scale(0.97);
+        }
+
+        .status-container .observation-deck .obs-card .obs-emoji {
+            font-size: 26px;
+            flex-shrink: 0;
+        }
+
+        .status-container .observation-deck .obs-card .obs-info {
+            flex: 1;
+        }
+
+        .status-container .observation-deck .obs-card .obs-info .obs-label {
+            font-family: 'Fraunces', serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: #2a1a0a;
+        }
+
+        .status-container .observation-deck .obs-card .obs-arrow {
+            font-size: 16px;
+            color: #bbb;
+            transition: transform 0.3s ease;
+        }
+
+        .detail-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 8px;
+            padding-bottom: 60px;
+        }
+
+        .detail-container .detail-status-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 4px;
+        }
+
+        .detail-container .detail-title {
+            font-family: 'Fraunces', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #2a1a0a;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .detail-container .detail-description {
+            font-size: 16px;
+            color: #666;
+            text-align: center;
+            line-height: 1.6;
+            max-width: 280px;
+            margin: 0 auto 4px;
+        }
+
+        .detail-container .detail-context {
+            font-size: 14px;
+            color: #888;
+            font-style: italic;
+            text-align: center;
+            max-width: 260px;
+            margin: 0 auto 12px;
+        }
+
+        .detail-container .detail-listen {
+            display: block;
+            margin: 0 auto 12px;
+            background: none;
+            border: 2px solid rgba(0, 0, 0, 0.06);
+            border-radius: 30px;
+            padding: 10px 28px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #3a2a1a;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .detail-container .detail-listen:active {
+            transform: scale(0.94);
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        .detail-container .detail-divider {
+            border: none;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            margin: 4px 0 10px;
+        }
+
+        .detail-container .detail-how-else {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+            font-style: italic;
+        }
+
+        .detail-container .detail-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .detail-container .detail-chips .status-chip {
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .detail-container .detail-chips .status-chip:active {
+            transform: scale(0.94);
+        }
+
+        .detail-container .detail-chips .status-chip.active {
+            background: rgba(58, 42, 26, 0.1);
+            border-color: #3a2a1a;
+            color: #3a2a1a;
+        }
+
+        .detail-container .detail-chips .status-chip .chip-icon {
+            font-size: 14px;
+        }
+
+        .detail-container .detail-footer {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .position-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 8px;
+            padding-bottom: 60px;
+            gap: 8px;
+        }
+
+        .position-container .pos-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 4px;
+        }
+
+        .position-container .pos-header .pos-counter {
+            font-size: 14px;
+            color: #888;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+
+        .position-container .pos-card {
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 24px;
+            border: 2px solid rgba(0, 0, 0, 0.04);
+            padding: 28px 20px 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .position-container .pos-card .pos-sentence {
+            font-size: 24px;
+            font-weight: 500;
+            color: #2a1a0a;
+            line-height: 1.6;
+            padding: 8px 0 16px;
+            letter-spacing: -0.01em;
+            min-height: 52px;
+            text-align: center;
+        }
+
+        .position-container .pos-card .pos-sentence .blank {
+            display: inline-block;
+            min-width: 76px;
+            border-bottom: 3px solid #3a2a1a;
+            margin: 0 4px;
+            padding: 0 4px;
+            font-weight: 600;
+            color: #3a2a1a;
+            text-align: center;
+            position: relative;
+        }
+
+        .position-container .pos-card .pos-sentence .blank.filled {
+            border-bottom-color: #2a7a4a;
+            color: #2a7a4a;
+        }
+
+        .position-container .pos-card .pos-sentence .blank .sliding-word {
+            display: inline-block;
+            animation: slideIntoBlank 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+        }
+
+        @keyframes slideIntoBlank {
+            0% {
+                opacity: 0;
+                transform: translateY(-30px) scale(1.3);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .position-container .pos-card .pos-divider {
+            border: none;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            margin: 8px 0 14px;
+        }
+
+        .position-container .pos-card .pos-chip-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 12px auto 8px;
+            min-height: 80px;
+            width: 100%;
+            position: relative;
+        }
+
+        .position-container .pos-card .pos-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 16px 40px;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            user-select: none;
+            min-width: 120px;
+        }
+
+        .position-container .pos-card .pos-chip:active {
+            transform: scale(0.94);
+        }
+
+        .position-container .pos-card .pos-chip .chip-text {
+            font-size: 32px;
+            font-weight: 700;
+            color: #3a2a1a;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .position-container .pos-card .pos-chip .chip-hint {
+            font-size: 11px;
+            color: #bbb;
+            font-weight: 400;
+            margin-left: 10px;
+            letter-spacing: 0.04em;
+        }
+
+        .position-container .pos-card .pos-chip.tapped {
+            opacity: 0;
+            transform: scale(0.8) translateY(-10px);
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .position-container .pos-card .pos-arrow {
+            text-align: center;
+            font-size: 20px;
+            color: #ccc;
+            padding: 2px 0 6px;
+            transition: all 0.3s ease;
+        }
+
+        .position-container .pos-card .pos-arrow.done {
+            color: #2a7a4a;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
+        }
+
+        .position-container .pos-card .pos-feedback {
+            margin: 2px 0 6px;
+            padding: 10px 14px;
+            border-radius: 14px;
+            background: rgba(58, 42, 26, 0.04);
+            border-left: 3px solid #2a7a4a;
+            font-size: 17px;
+            color: #2a1a0a;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            padding: 0 14px;
+            transition: all 0.5s ease;
+            border-left-color: transparent;
+        }
+
+        .position-container .pos-card .pos-feedback.show {
+            opacity: 1;
+            max-height: 80px;
+            padding: 10px 14px;
+            border-left-color: #2a7a4a;
+        }
+
+        .position-container .pos-card .pos-feedback .fb-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .position-container .pos-card .pos-feedback .fb-text {
+            flex: 1;
+        }
+
+        .position-container .pos-card .pos-feedback .listen-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 4px 8px;
+            color: #3a2a1a;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .position-container .pos-card .pos-feedback .listen-btn:active {
+            opacity: 0.5;
+        }
+
+        .position-container .pos-next-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0 8px;
+            flex-wrap: wrap;
+            opacity: 0;
+            transition: opacity 0.6s ease 0.3s;
+        }
+
+        .position-container .pos-next-row.show {
+            opacity: 1;
+        }
+
+        .position-container .pos-next-row .next-label {
+            font-size: 13px;
+            color: #aaa;
+            font-weight: 400;
+        }
+
+        .position-container .pos-next-row .next-chip {
+            font-size: 13px;
+            color: #888;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .position-container .pos-next-row .next-chip:active {
+            transform: scale(0.94);
+            background: rgba(58, 42, 26, 0.08);
+        }
+
+        .position-container .pos-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: 8px;
+            flex-shrink: 0;
+        }
+
+        /* ============================================================
+           ACTION — Compact with visible Next button
+           ============================================================ */
+        .action-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 8px;
+            padding-bottom: 60px;
+            gap: 4px;
+        }
+
+        .action-container .action-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 2px;
+        }
+
+        .action-container .action-header .action-counter {
+            font-size: 14px;
+            color: #888;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+
+        .action-container .action-puzzle {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 2px 0 0px;
+            gap: 2px;
+        }
+
+        .action-container .action-puzzle .action-verbs {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            padding: 2px 0 2px;
+        }
+
+        .action-container .action-puzzle .action-verbs .verb-line {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 500;
+            color: #2a1a0a;
+            padding: 1px 0;
+            line-height: 1.3;
+        }
+
+        .action-container .action-puzzle .action-divider {
+            border: none;
+            border-top: 2px dashed rgba(0, 0, 0, 0.08);
+            margin: 4px 0 6px;
+        }
+
+        .action-container .action-puzzle .action-who {
+            font-size: 14px;
+            font-weight: 500;
+            color: #888;
+            margin: 0 0 8px;
+            letter-spacing: 0.02em;
+        }
+
+        .action-container .action-puzzle .action-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .action-container .action-puzzle .action-options .opt-btn {
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px solid rgba(0, 0, 0, 0.06);
+            border-radius: 14px;
+            padding: 12px 6px;
+            font-size: 15px;
+            font-weight: 500;
+            color: #3a2a1a;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        .action-container .action-puzzle .action-options .opt-btn:active {
+            transform: scale(0.94);
+            background: rgba(58, 42, 26, 0.06);
+        }
+
+        .action-container .action-puzzle .action-options .opt-btn.selected {
+            border-color: #3a2a1a;
+            background: rgba(58, 42, 26, 0.06);
+            transform: scale(1.02);
+        }
+
+        .action-container .action-puzzle .action-options .opt-btn.correct {
+            border-color: #2a7a4a;
+            background: rgba(42, 122, 74, 0.10);
+            transform: scale(1.02);
+        }
+
+        .action-container .action-puzzle .action-options .opt-btn.correct::after {
+            content: '✓';
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            font-size: 14px;
+            color: #2a7a4a;
+        }
+
+        .action-container .action-puzzle .action-options .opt-btn.wrong {
+            border-color: #b94a4a;
+            background: rgba(185, 74, 74, 0.08);
+            animation: shake 0.4s ease;
+        }
+
+        .action-container .action-puzzle .action-options .opt-btn.wrong::after {
+            content: '✗';
+            position: absolute;
+            top: 4px;
+            right: 8px;
+            font-size: 14px;
+            color: #b94a4a;
+        }
+
+        .action-container .action-puzzle .action-options .opt-btn.disabled {
+            cursor: default;
+        }
+
+        .action-container .action-puzzle .action-options .opt-btn.disabled:active {
+            transform: none;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+        }
+
+        .action-container .action-puzzle .action-feedback {
+            margin: 2px 0 4px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid rgba(0, 0, 0, 0.04);
+            font-size: 14px;
+            color: #2a1a0a;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            padding: 0 14px;
+            transition: all 0.4s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+        }
+
+        .action-container .action-puzzle .action-feedback.show {
+            opacity: 1;
+            max-height: 160px;
+            padding: 8px 14px 6px;
+        }
+
+        .action-container .action-puzzle .action-feedback .fb-top {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-container .action-puzzle .action-feedback .fb-icon {
+            font-size: 18px;
+            flex-shrink: 0;
+            color: #2a7a4a;
+        }
+
+        .action-container .action-puzzle .action-feedback .fb-identity {
+            font-family: 'Fraunces', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2a1a0a;
+            flex: 1;
+        }
+
+        .action-container .action-puzzle .action-feedback .listen-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 2px 6px;
+            color: #3a2a1a;
+            transition: opacity 0.2s;
+            flex-shrink: 0;
+        }
+
+        .action-container .action-puzzle .action-feedback .listen-btn:active {
+            opacity: 0.5;
+        }
+
+        .action-container .action-puzzle .action-feedback .fb-verbs {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            margin-top: 3px;
+            padding-left: 4px;
+        }
+
+        .action-container .action-puzzle .action-feedback .fb-verbs .fb-verb {
+            font-size: 13px;
+            color: #2a7a4a;
+            font-weight: 500;
+        }
+
+        .action-container .action-puzzle .action-feedback .fb-explanation {
+            font-size: 13px;
+            color: #666;
+            margin-top: 3px;
+            padding-top: 3px;
+            border-top: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .action-container .action-next-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 0 2px;
+            flex-wrap: wrap;
+            opacity: 0;
+            transition: opacity 0.6s ease 0.3s;
+            min-height: 22px;
+        }
+
+        .action-container .action-next-row.show {
+            opacity: 1;
+        }
+
+        .action-container .action-next-row .next-label {
+            font-size: 12px;
+            color: #aaa;
+            font-weight: 400;
+        }
+
+        .action-container .action-next-row .next-chip {
+            font-size: 12px;
+            color: #888;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 3px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            font-weight: 500;
+        }
+
+        .action-container .action-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            padding-top: 6px;
+            margin-top: auto;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            flex-shrink: 0;
+        }
+
+        .action-container .action-footer .btn-secondary {
+            max-width: 120px;
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+
+        .action-container .action-footer .btn-primary {
+            max-width: 120px;
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+
+        .speak-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 8px;
+            padding-bottom: 60px;
+            gap: 8px;
+        }
+
+        .speak-container .speak-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 4px;
+        }
+
+        .speak-container .speak-header .speak-counter {
+            font-size: 13px;
+            color: #888;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 4px 14px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+
+        .speak-container .speak-conversation {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 8px 0 12px;
+            overflow-y: auto;
+            min-height: 280px;
+            justify-content: flex-end;
+        }
+
+        .speak-container .speak-conversation .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 88%;
+            animation: messageIn 0.4s ease;
+        }
+
+        @keyframes messageIn {
+            0% {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .speak-container .speak-conversation .message.ai {
+            align-self: flex-start;
+        }
+
+        .speak-container .speak-conversation .message.learner {
+            align-self: flex-end;
+        }
+
+        .speak-container .speak-conversation .message .msg-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 3px;
+        }
+
+        .speak-container .speak-conversation .message .msg-bubble {
+            padding: 10px 16px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.5;
+            color: #2a1a0a;
+            word-wrap: break-word;
+        }
+
+        .speak-container .speak-conversation .message.ai .msg-bubble {
+            background: rgba(255, 255, 255, 0.75);
+            border: 2px solid rgba(0, 0, 0, 0.04);
+            border-bottom-left-radius: 4px;
+        }
+
+        .speak-container .speak-conversation .message.learner .msg-bubble {
+            background: rgba(58, 42, 26, 0.08);
+            border: 2px solid rgba(58, 42, 26, 0.08);
+            border-bottom-right-radius: 4px;
+        }
+
+        .speak-container .speak-conversation .message .msg-correction {
+            font-size: 14px;
+            color: #b94a4a;
+            margin-top: 4px;
+            padding-left: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .speak-container .speak-conversation .message .msg-correction .correction-suggestion {
+            color: #2a7a4a;
+            font-weight: 500;
+        }
+
+        .speak-container .speak-conversation .message .msg-correction .listen-btn {
+            background: none;
+            border: none;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 2px 6px;
+            color: #3a2a1a;
+            transition: opacity 0.2s;
+        }
+
+        .speak-container .speak-conversation .message .msg-correction .listen-btn:active {
+            opacity: 0.5;
+        }
+
+        .speak-container .speak-conversation .message .msg-perfect {
+            font-size: 14px;
+            color: #2a7a4a;
+            margin-top: 4px;
+            padding-left: 4px;
+            font-weight: 500;
+        }
+
+        .speak-container .speak-conversation .typing-indicator {
+            align-self: flex-start;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            border: 2px solid rgba(0, 0, 0, 0.04);
+            animation: messageIn 0.3s ease;
+        }
+
+        .speak-container .speak-conversation .typing-indicator .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #999;
+            animation: typingDot 1.2s ease infinite;
+        }
+
+        .speak-container .speak-conversation .typing-indicator .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .speak-container .speak-conversation .typing-indicator .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingDot {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.3; }
+            30% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        .speak-container .speak-mic-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 0 6px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .speak-container .speak-mic-area .mic-button {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #3a2a1a;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            color: white;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            position: relative;
+        }
+
+        .speak-container .speak-mic-area .mic-button:active {
+            transform: scale(0.92);
+        }
+
+        .speak-container .speak-mic-area .mic-button.recording {
+            background: #b94a4a;
+            animation: pulse 1.2s ease infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .speak-container .speak-mic-area .mic-button .pulse-ring {
+            position: absolute;
+            inset: -6px;
+            border-radius: 50%;
+            border: 3px solid rgba(185, 74, 74, 0.25);
+            animation: ringPulse 1.5s ease infinite;
+            pointer-events: none;
+        }
+
+        @keyframes ringPulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        .speak-container .speak-mic-area .mic-button:disabled {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        .speak-container .speak-mic-area .mic-button:disabled:active {
+            transform: none;
+        }
+
+        .speak-container .speak-mic-area .mic-hint {
+            font-size: 14px;
+            color: #999;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+        }
+
+        .speak-container .speak-mic-area .mic-status {
+            font-size: 13px;
+            color: #888;
+            font-style: italic;
+            min-height: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .speak-container .speak-mic-area .mic-status.listening {
+            color: #b94a4a;
+        }
+
+        .speak-container .speak-footer {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+            padding-top: 8px;
+        }
+
+        .speak-container .speak-footer .btn-secondary {
+            max-width: 120px;
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+
+        .speak-container .speak-footer .btn-primary {
+            max-width: 140px;
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: #3a2a1a;
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            flex: 1;
+            max-width: 200px;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-primary:active {
+            background: #2a1a0a;
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.3;
+            cursor: default;
+        }
+
+        .btn-secondary {
+            background: #e8ddd0;
+            color: #2a1a0a;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 30px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .btn-secondary:active {
+            background: #d5c8b8;
+        }
+
+        .completion-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 6px;
+        }
+
+        .completion-container .big-icon {
+            font-size: 56px;
+        }
+
+        .completion-container .comp-title {
+            font-family: 'Fraunces', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #2a1a0a;
+        }
+
+        .completion-container .comp-sub {
+            font-size: 15px;
+            color: #666;
+            max-width: 260px;
+            line-height: 1.5;
+        }
+
+        .completion-container .comp-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px 12px;
+            margin: 8px 0 12px;
+        }
+
+        .completion-container .comp-list .item {
+            font-size: 14px;
+            color: #3a2a1a;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 4px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .world-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            flex: 1;
+            padding-top: 6px;
+        }
+
+        .world-card {
+            background: white;
+            border-radius: 16px;
+            padding: 18px 10px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: background 0.1s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .world-card:active {
+            background: #f0ece6;
+        }
+
+        .world-card .w-emoji {
+            font-size: 36px;
+        }
+
+        .world-card .w-name {
+            font-family: 'Fraunces', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2a1a0a;
+        }
+
+        .world-card .w-status {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .world-card.coming {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        .world-card.coming:active {
+            background: white;
+        }
+
+        .room-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            padding-top: 6px;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: 14px;
+            padding: 14px 18px;
+            cursor: pointer;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.1s;
+        }
+
+        .room-card:active {
+            background: #f0ece6;
+        }
+
+        .room-card .r-emoji {
+            font-size: 28px;
+        }
+
+        .room-card .r-info {
+            flex: 1;
+        }
+
+        .room-card .r-name {
+            font-family: 'Fraunces', serif;
+            font-size: 16px;
+            font-weight: 600;
+            color: #2a1a0a;
+        }
+
+        .room-card .r-sub {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .room-card.coming {
+            opacity: 0.4;
+            cursor: default;
+        }
+
+        .room-card.coming:active {
+            background: white;
+        }
+
+        .landing-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding-top: 8px;
+            padding-bottom: 60px;
+            gap: 8px;
+        }
+
+        .landing-title-section {
+            flex-shrink: 0;
+            padding: 2px 0 6px;
+        }
+
+        .landing-title-section .main-title {
+            font-family: 'Fraunces', serif;
+            font-size: 38px;
+            font-weight: 700;
+            color: #2a1a0a;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+
+        .landing-title-section .main-title .highlight {
+            color: #c77d5e;
+        }
+
+        .landing-title-section .tagline {
+            font-family: 'Fraunces', serif;
+            font-size: 15px;
+            color: #999;
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            font-style: italic;
+            margin-top: 1px;
+        }
+
+        .landing-title-section .tagline span {
+            color: #c77d5e;
+        }
+
+        .landing-hero {
+            flex: 1;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            margin: 4px 0 10px;
+            min-height: 180px;
+            touch-action: none;
+            cursor: grab;
+            background: #222;
+        }
+
+        .landing-hero:active {
+            cursor: grabbing;
+        }
+
+        .landing-hero .hero-track {
+            display: flex;
+            height: 100%;
+            transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            will-change: transform;
+        }
+
+        .landing-hero .world-slide {
+            flex: 0 0 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 20px;
+        }
+
+        .world-slide .world-bg {
+            position: absolute;
+            inset: 0;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .world-slide .world-bg .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.6;
+        }
+
+        .world-slide .world-bg .blob-1 {
+            width: 200px;
+            height: 200px;
+            top: -20%;
+            right: -10%;
+        }
+        .world-slide .world-bg .blob-2 {
+            width: 150px;
+            height: 150px;
+            bottom: -10%;
+            left: -10%;
+        }
+        .world-slide .world-bg .blob-3 {
+            width: 100px;
+            height: 100px;
+            top: 30%;
+            left: 20%;
+        }
+
+        .world-home .world-bg { background: linear-gradient(160deg, #2a1a0a, #3a2a1a, #2a2a2a); }
+        .world-home .blob-1 { background: #c77d5e; }
+        .world-home .blob-2 { background: #8b6b4a; }
+        .world-home .blob-3 { background: #d48166; }
+
+        .world-street .world-bg { background: linear-gradient(160deg, #1a1a2a, #2a2a4a, #1a1a1a); }
+        .world-street .blob-1 { background: #4a6a8a; }
+        .world-street .blob-2 { background: #2a4a6a; }
+        .world-street .blob-3 { background: #6a8aaa; }
+
+        .world-park .world-bg { background: linear-gradient(160deg, #1a2a1a, #2a4a2a, #1a2a1a); }
+        .world-park .blob-1 { background: #4a8a4a; }
+        .world-park .blob-2 { background: #2a6a2a; }
+        .world-park .blob-3 { background: #6aaa5a; }
+
+        .world-hospital .world-bg { background: linear-gradient(160deg, #2a1a1a, #4a2a2a, #1a1a1a); }
+        .world-hospital .blob-1 { background: #8a4a4a; }
+        .world-hospital .blob-2 { background: #6a3a3a; }
+        .world-hospital .blob-3 { background: #aa5a5a; }
+
+        .world-airport .world-bg { background: linear-gradient(160deg, #1a1a2a, #2a2a5a, #1a1a2a); }
+        .world-airport .blob-1 { background: #4a5a8a; }
+        .world-airport .blob-2 { background: #3a4a7a; }
+        .world-airport .blob-3 { background: #5a6a9a; }
+
+        .world-market .world-bg { background: linear-gradient(160deg, #1a2a1a, #2a4a3a, #1a2a1a); }
+        .world-market .blob-1 { background: #5a8a4a; }
+        .world-market .blob-2 { background: #4a7a3a; }
+        .world-market .blob-3 { background: #6a9a5a; }
+
+        .world-slide .world-label {
+            position: relative;
+            z-index: 2;
+            font-family: 'Fraunces', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 0.04em;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .world-slide .world-emoji {
+            position: relative;
+            z-index: 2;
+            font-size: 48px;
+            margin-bottom: 4px;
+            opacity: 0.7;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .world-slide .world-sub {
+            position: relative;
+            z-index: 2;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.35);
+            font-weight: 400;
+            letter-spacing: 0.04em;
+            margin-top: 2px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #c77d5e 0%, #d48166 100%);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 24px rgba(199, 125, 94, 0.2);
+            width: 100%;
+            letter-spacing: 0.02em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .btn-start:active {
+            transform: scale(0.96);
+            box-shadow: 0 2px 12px rgba(199, 125, 94, 0.1);
+        }
+
+        .btn-start .arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-start:active .arrow {
+            transform: translateX(4px);
+        }
+
+        .landing-carousel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            padding: 10px 0 4px;
+            flex-shrink: 0;
+        }
+
+        .landing-carousel .world-item {
+            padding: 6px 4px;
+            border-radius: 30px;
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            color: rgba(0, 0, 0, 0.25);
+            font-size: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            text-align: center;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .landing-carousel .world-item:active {
+            transform: scale(0.94);
+        }
+
+        .landing-carousel .world-item.active {
+            background: rgba(199, 125, 94, 0.12);
+            border-color: rgba(199, 125, 94, 0.2);
+            color: #2a1a0a;
+            font-weight: 600;
+        }
+
+        .landing-carousel .world-item.coming {
+            opacity: 0.15;
+            cursor: default;
+        }
+
+        .landing-carousel .world-item.coming:active {
+            transform: none;
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .landing-carousel .world-item .badge {
+            display: block;
+            font-size: 6px;
+            color: rgba(0, 0, 0, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-top: 1px;
+        }
+
+        .landing-flick {
+            text-align: center;
+            font-size: 11px;
+            color: rgba(0, 0, 0, 0.08);
+            letter-spacing: 0.08em;
+            padding: 2px 0 0;
+            flex-shrink: 0;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .landing-flick .arrow {
+            display: inline-block;
+            animation: flickPulse 2.5s ease-in-out infinite;
+        }
+
+        .landing-flick .arrow.left {
+            animation-delay: 0s;
+        }
+        .landing-flick .arrow.right {
+            animation-delay: 0.5s;
+        }
+
+        @keyframes flickPulse {
+            0%, 100% { opacity: 0.1; transform: translateX(0); }
+            50% { opacity: 0.4; transform: translateX(3px); }
+        }
+
+        .landing-flick .arrow.left {
+            animation-name: flickPulseLeft;
+        }
+
+        @keyframes flickPulseLeft {
+            0%, 100% { opacity: 0.1; transform: translateX(0); }
+            50% { opacity: 0.4; transform: translateX(-3px); }
+        }
+
+        .placeholder-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            gap: 8px;
+        }
+
+        .placeholder-box .p-icon {
+            font-size: 48px;
+            opacity: 0.3;
+        }
+
+        .placeholder-box .p-title {
+            font-family: 'Fraunces', serif;
+            font-size: 18px;
+            font-weight: 600;
+            color: #2a1a0a;
+        }
+
+        .placeholder-box .p-desc {
+            font-size: 14px;
+            color: #888;
+            max-width: 240px;
+        }
+
+        .text-muted {
+            color: #888;
+            font-size: 13px;
+        }
+
+        .mt-8 {
+            margin-top: 8px;
+        }
+
+        @media (max-width: 400px) {
+            .phone {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+                border: none;
+                box-shadow: none;
+            }
+            .screen {
+                padding: 16px 14px 20px;
+            }
+            .door-overlay {
+                border-radius: 0;
+            }
+            .landing-hero {
+                min-height: 150px;
+            }
+            .world-slide .world-emoji {
+                font-size: 36px;
+            }
+            .world-slide .world-label {
+                font-size: 22px;
+            }
+            .landing-title-section .main-title {
+                font-size: 32px;
+            }
+            .landing-carousel {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 3px;
+            }
+            .landing-carousel .world-item {
+                font-size: 9px;
+                padding: 4px 2px;
+            }
+            .action-container .action-puzzle .action-verbs .verb-line {
+                font-size: 16px;
+            }
+            .action-container .action-puzzle .action-options .opt-btn {
+                font-size: 13px;
+                padding: 10px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="phone" id="app">
+
+        <div class="door-overlay" id="doorOverlay">
+            <div class="door-container">
+                <div class="door" id="doorAnim">
+                    <div class="door-face tone-neutral" id="doorFace">
+                        <span id="doorEmoji">🧊</span>
+                        <div class="handle"></div>
+                    </div>
+                    <div class="door-back">
+                        <div class="light"></div>
+                        ✨
+                    </div>
+                </div>
+                <div class="door-label" id="doorLabel">Opening...</div>
+            </div>
+        </div>
+
+        <!-- LANDING -->
+        <div class="screen active" id="s-landing">
+            <div class="landing-container">
+                <div class="landing-title-section">
+                    <h1 class="main-title">Word<span class="highlight">Walk</span></h1>
+                    <div class="tagline">Walk through the world. <span>Learn naturally</span>.</div>
+                </div>
+
+                <div class="landing-hero" id="heroCanvas">
+                    <div class="hero-track" id="heroTrack">
+                        <div class="world-slide world-home" data-world="home">
+                            <div class="world-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+                            <div class="world-emoji">🏠</div>
+                            <div class="world-label">HOME</div>
+                            <div class="world-sub">Where we live</div>
+                        </div>
+                        <div class="world-slide world-street" data-world="street">
+                            <div class="world-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+                            <div class="world-emoji">🛤️</div>
+                            <div class="world-label">STREET</div>
+                            <div class="world-sub">Where we walk</div>
+                        </div>
+                        <div class="world-slide world-park" data-world="park">
+                            <div class="world-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+                            <div class="world-emoji">🌳</div>
+                            <div class="world-label">PARK</div>
+                            <div class="world-sub">Where we relax</div>
+                        </div>
+                        <div class="world-slide world-hospital" data-world="hospital">
+                            <div class="world-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+                            <div class="world-emoji">🏥</div>
+                            <div class="world-label">HOSPITAL</div>
+                            <div class="world-sub">Where we heal</div>
+                        </div>
+                        <div class="world-slide world-airport" data-world="airport">
+                            <div class="world-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+                            <div class="world-emoji">✈️</div>
+                            <div class="world-label">AIRPORT</div>
+                            <div class="world-sub">Where we travel</div>
+                        </div>
+                        <div class="world-slide world-market" data-world="market">
+                            <div class="world-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+                            <div class="world-emoji">🛒</div>
+                            <div class="world-label">MARKET</div>
+                            <div class="world-sub">Where we shop</div>
+                        </div>
+                        <div class="world-slide world-farm" data-world="farm">
+                            <div class="world-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+                            <div class="world-emoji">🌾</div>
+                            <div class="world-label">FARM</div>
+                            <div class="world-sub">Where we grow</div>
+                        </div>
+                        <div class="world-slide world-school" data-world="school">
+                            <div class="world-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+                            <div class="world-emoji">🏫</div>
+                            <div class="world-label">SCHOOL</div>
+                            <div class="world-sub">Where we learn</div>
+                        </div>
+                        <div class="world-slide world-beach" data-world="beach">
+                            <div class="world-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+                            <div class="world-emoji">🏖️</div>
+                            <div class="world-label">BEACH</div>
+                            <div class="world-sub">Where we rest</div>
+                        </div>
+                        <div class="world-slide world-workshop" data-world="workshop">
+                            <div class="world-bg"><div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div></div>
+                            <div class="world-emoji">🔧</div>
+                            <div class="world-label">WORKSHOP</div>
+                            <div class="world-sub">Where we create</div>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-start" onclick="goTo('s-worlds')">
+                    Start walking
+                    <span class="arrow">→</span>
+                </button>
+
+                <div class="landing-carousel" id="worldCarousel">
+                    <button class="world-item active" data-world="home" onclick="selectWorld('home')">Home</button>
+                    <button class="world-item" data-world="street" onclick="selectWorld('street')">Street</button>
+                    <button class="world-item" data-world="park" onclick="selectWorld('park')">Park</button>
+                    <button class="world-item" data-world="hospital" onclick="selectWorld('hospital')">Hospital</button>
+                    <button class="world-item" data-world="airport" onclick="selectWorld('airport')">Airport</button>
+                    <button class="world-item" data-world="market" onclick="selectWorld('market')">Market</button>
+                    <button class="world-item coming" data-world="farm" onclick="selectWorld('farm')">Farm <span class="badge">soon</span></button>
+                    <button class="world-item coming" data-world="school" onclick="selectWorld('school')">School <span class="badge">soon</span></button>
+                    <button class="world-item coming" data-world="beach" onclick="selectWorld('beach')">Beach <span class="badge">soon</span></button>
+                    <button class="world-item coming" data-world="workshop" onclick="selectWorld('workshop')">Workshop <span class="badge">soon</span></button>
+                </div>
+
+                <div class="landing-flick">
+                    <span class="arrow left">←</span>
+                    flick to explore
+                    <span class="arrow right">→</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- WORLDS -->
+        <div class="screen" id="s-worlds">
+            <div class="header">
+                <span class="title">Choose a World</span>
+                <span class="greeting">🌍</span>
+            </div>
+            <div class="world-grid">
+                <div class="world-card" onclick="goTo('s-home')">
+                    <span class="w-emoji">🏠</span>
+                    <span class="w-name">Home</span>
+                    <span class="w-status">Open</span>
+                </div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🛣️</span><span class="w-name">Street</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🏥</span><span class="w-name">Hospital</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🛒</span><span class="w-name">Supermarket</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🍽️</span><span class="w-name">Restaurant</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">✈️</span><span class="w-name">Airport</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🏖️</span><span class="w-name">Beach</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🚗</span><span class="w-name">Car</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🚜</span><span class="w-name">Farm</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🏟️</span><span class="w-name">Stadium</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🎉</span><span class="w-name">Party</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">⛪</span><span class="w-name">Church</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🏫</span><span class="w-name">School</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🏦</span><span class="w-name">Bank</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🚉</span><span class="w-name">Taxi Rank</span><span class="w-status">Coming soon</span></div>
+                <div class="world-card coming" onclick="showPlaceholder('s-worlds')"><span class="w-emoji">🏢</span><span class="w-name">Office</span><span class="w-status">Coming soon</span></div>
+            </div>
+        </div>
+
+        <!-- HOME -->
+        <div class="screen" id="s-home">
+            <div class="header">
+                <button class="back" onclick="goTo('s-worlds')">‹</button>
+                <span class="title">Home</span>
+                <span class="greeting">🏠</span>
+                <span class="walk-badge">Walk</span>
+            </div>
+            <div class="room-grid">
+                <div class="room-card" onclick="goTo('s-kitchen-entrance')">
+                    <span class="r-emoji">🍳</span>
+                    <div class="r-info">
+                        <div class="r-name">Kitchen Walk</div>
+                        <div class="r-sub">Where we prepare food</div>
+                    </div>
+                </div>
+                <div class="room-card coming" onclick="showPlaceholder('s-home')">
+                    <span class="r-emoji">🛏️</span>
+                    <div class="r-info">
+                        <div class="r-name">Bedroom Walk</div>
+                        <div class="r-sub">Coming soon</div>
+                    </div>
+                </div>
+                <div class="room-card coming" onclick="showPlaceholder('s-home')">
+                    <span class="r-emoji">🚿</span>
+                    <div class="r-info">
+                        <div class="r-name">Bathroom Walk</div>
+                        <div class="r-sub">Coming soon</div>
+                    </div>
+                </div>
+                <div class="room-card coming" onclick="showPlaceholder('s-home')">
+                    <span class="r-emoji">🚗</span>
+                    <div class="r-info">
+                        <div class="r-name">Garage Walk</div>
+                        <div class="r-sub">Coming soon</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- KITCHEN ENTRANCE -->
+        <div class="screen" id="s-kitchen-entrance">
+            <div class="header">
+                <button class="back" onclick="goTo('s-home')">‹</button>
+                <span class="title">Kitchen Walk</span>
+                <span class="greeting">☀️ Good morning</span>
+            </div>
+
+            <div class="kitchen-room">
+                <span class="room-label">📍 You are here</span>
+                <div class="room-title">Kitchen</div>
+                <div class="room-desc">A place where we prepare and cook food.</div>
+
+                <div class="kitchen-grid">
+                    <div class="zone" onclick="startWalk('fridge')">
+                        <span class="z-emoji">🧊</span>
+                        <span class="z-label">Fridge</span>
+                        <span class="z-sub">cold storage</span>
+                    </div>
+                    <div class="zone" onclick="startWalk('freezer')">
+                        <span class="z-emoji">❄️</span>
+                        <span class="z-label">Freezer</span>
+                        <span class="z-sub">frozen food</span>
+                    </div>
+                    <div class="zone" onclick="startWalk('cupboard')">
+                        <span class="z-emoji">🗄️</span>
+                        <span class="z-label">Cupboard</span>
+                        <span class="z-sub">storage</span>
+                    </div>
+                    <div class="zone" onclick="startWalk('drawer')">
+                        <span class="z-emoji">🧰</span>
+                        <span class="z-label">Drawer</span>
+                        <span class="z-sub">utensils</span>
+                    </div>
+                    <div class="zone" onclick="startWalk('sink')">
+                        <span class="z-emoji">🚰</span>
+                        <span class="z-label">Sink</span>
+                        <span class="z-sub">washing</span>
+                    </div>
+                    <div class="zone" onclick="startWalk('dishwasher')">
+                        <span class="z-emoji">🧼</span>
+                        <span class="z-label">Dishwasher</span>
+                        <span class="z-sub">cleaning</span>
+                    </div>
+                    <div class="zone" onclick="startWalk('pantry')">
+                        <span class="z-emoji">🥫</span>
+                        <span class="z-label">Pantry</span>
+                        <span class="z-sub">dry goods</span>
+                    </div>
+                    <div class="zone" onclick="startWalk('stove')">
+                        <span class="z-emoji">🔥</span>
+                        <span class="z-label">Stove</span>
+                        <span class="z-sub">cooking</span>
+                    </div>
+                </div>
+
+                <p class="text-muted" style="font-size:11px; margin-top:4px;">Tap anything to explore</p>
+            </div>
+        </div>
+
+        <!-- SPACE -->
+        <div class="screen" id="s-space">
+            <div class="header">
+                <button class="back" onclick="goTo('s-kitchen-entrance')">‹</button>
+                <span class="title" id="space-back-label">Kitchen Walk</span>
+                <span class="walk-badge" id="spaceBadge">👀 Observe</span>
+            </div>
+            <div class="walk-container" id="space-content"></div>
+        </div>
+
+        <!-- PARTS -->
+        <div class="screen" id="s-part">
+            <div class="header">
+                <button class="back" onclick="goTo('s-space')">‹</button>
+                <span class="title" id="part-back-label">Parts</span>
+                <span class="walk-badge" id="partBadge">🧩</span>
+            </div>
+            <div class="parts-container" id="part-content"></div>
+        </div>
+
+        <!-- STATUS -->
+        <div class="screen" id="s-condition">
+            <div class="header">
+                <button class="back" onclick="goTo('s-space')">‹</button>
+                <span class="title" id="status-back-label">Status</span>
+                <span class="walk-badge" id="statusBadge">🔄</span>
+            </div>
+            <div class="status-container" id="status-content"></div>
+        </div>
+
+        <!-- STATUS DETAIL -->
+        <div class="screen" id="s-status-detail">
+            <div class="header">
+                <button class="back" onclick="goTo('s-condition')">‹</button>
+                <span class="title" id="detail-back-label">Status</span>
+                <span class="walk-badge" id="detailBadge">🔍</span>
+            </div>
+            <div class="detail-container" id="detail-content"></div>
+        </div>
+
+        <!-- POSITION -->
+        <div class="screen" id="s-position">
+            <div class="header">
+                <button class="back" onclick="goTo('s-condition')">‹</button>
+                <span class="title">Position</span>
+                <span class="walk-badge"></span>
+            </div>
+            <div class="position-container" id="position-content"></div>
+        </div>
+
+        <!-- ACTION -->
+        <div class="screen" id="s-action">
+            <div class="header">
+                <button class="back" onclick="goTo('s-condition')">‹</button>
+                <span class="title">Action</span>
+                <span class="walk-badge">⚡</span>
+            </div>
+            <div class="action-container" id="action-content"></div>
+        </div>
+
+        <!-- SPEAK -->
+        <div class="screen" id="s-speak">
+            <div class="header">
+                <button class="back" onclick="goTo('s-action')">‹</button>
+                <span class="title">Speak</span>
+                <span class="walk-badge">🎙️</span>
+            </div>
+            <div class="speak-container" id="speak-content"></div>
+        </div>
+
+        <!-- COMPLETION -->
+        <div class="screen" id="s-completion">
+            <div class="header">
+                <button class="back" onclick="goTo('s-kitchen-entrance')">‹</button>
+                <span class="title">Kitchen Walk</span>
+                <span class="greeting">🎉</span>
+            </div>
+            <div class="completion-container" id="completion-content"></div>
+        </div>
+
+        <!-- PLACEHOLDER -->
+        <div class="screen" id="s-placeholder">
+            <div class="header">
+                <button class="back" onclick="goTo(placeholderReturnTo)">‹</button>
+                <span class="title">Coming Soon</span>
+            </div>
+            <div class="placeholder-box">
+                <div class="p-icon">🌱</div>
+                <div class="p-title">This space is still being built</div>
+                <div class="p-desc">Check back soon — more worlds are on the way.</div>
+                <button class="btn-primary" onclick="goTo(placeholderReturnTo)" style="max-width:180px; margin-top:8px;">Go back</button>
+            </div>
+        </div>
+
+        <div class="bottom-nav" id="bottomNav">
+            <button class="nav-btn" data-screen="s-space" onclick="goTo('s-space')">
+                <span class="nav-icon">🔍</span>
+                <span class="nav-label">Space</span>
+            </button>
+            <button class="nav-btn" data-screen="s-part" onclick="goTo('s-part')">
+                <span class="nav-icon">🧩</span>
+                <span class="nav-label">Part</span>
+            </button>
+            <button class="nav-btn" data-screen="s-condition" onclick="goTo('s-condition')">
+                <span class="nav-icon">🔄</span>
+                <span class="nav-label">Status</span>
+            </button>
+            <button class="nav-btn" data-screen="s-position" onclick="goTo('s-position')">
+                <span class="nav-icon">📍</span>
+                <span class="nav-label">Position</span>
+            </button>
+            <button class="nav-btn" data-screen="s-action" onclick="goTo('s-action')">
+                <span class="nav-icon">⚡</span>
+                <span class="nav-label">Action</span>
+            </button>
+            <button class="nav-btn" data-screen="s-speak" onclick="goTo('s-speak')">
+                <span class="nav-icon">🎙️</span>
+                <span class="nav-label">Speak</span>
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // ============================================================
+        // DATA — SPACE
+        // ============================================================
+
+        const WALK_DATA = {
+            fridge: { emoji: '🧊', title: 'Refrigerator', tone: 'cold', scene: [['🥛', '🍎']], companion: ['This is a refrigerator.', 'We keep food here.', 'It keeps food cold.'] },
+            freezer: { emoji: '❄️', title: 'Freezer', tone: 'cold', scene: [['🍦', '🥩']], companion: ['This is a freezer.', 'We keep food here.', 'It keeps food frozen.'] },
+            cupboard: { emoji: '🗄️', title: 'Cupboard', tone: 'neutral', scene: [['🍽️', '☕']], companion: ['This is a cupboard.', 'We keep dishes here.', 'It stores our plates and cups.'] },
+            drawer: { emoji: '🧰', title: 'Drawer', tone: 'neutral', scene: [['🍴', '🥄']], companion: ['This is a drawer.', 'We keep utensils here.', 'It stores forks and spoons.'] },
+            sink: { emoji: '🚰', title: 'Sink', tone: 'neutral', scene: [['🧽', '💧']], companion: ['This is a sink.', 'We wash things here.', 'We use it for cleaning.'] },
+            dishwasher: { emoji: '🧼', title: 'Dishwasher', tone: 'neutral', scene: [['🍽️', '🥄']], companion: ['This is a dishwasher.', 'We put dirty dishes here.', 'It washes them for us.'] },
+            pantry: { emoji: '🥫', title: 'Pantry', tone: 'neutral', scene: [['🍚', '🥫']], companion: ['This is a pantry.', 'We keep dry food here.', 'It stores rice and canned food.'] },
+            stove: { emoji: '🔥', title: 'Stove', tone: 'warm', scene: [['🍳', '🥘']], companion: ['This is a stove.', 'We cook food here.', 'It makes our food hot.'] }
+        };
+
+        const WALK_ORDER = ['fridge', 'freezer', 'cupboard', 'drawer', 'sink', 'dishwasher', 'pantry', 'stove'];
+
+        // ============================================================
+        // DATA — PARTS
+        // ============================================================
+
+        const PARTS_DATA = {
+            fridge: { emoji: '🧊', label: 'Refrigerator', subtitle: 'cold storage', parts: ['Door', 'Shelf', 'Shelf', 'Drawer', 'Top'], descriptions: { 'Door': 'The door opens to access food.', 'Shelf': 'Shelves hold food inside the fridge.', 'Drawer': 'Drawers keep fruits and vegetables fresh.', 'Top': 'The top of the refrigerator.' } },
+            freezer: { emoji: '❄️', label: 'Freezer', subtitle: 'frozen food', parts: ['Door', 'Shelf', 'Drawer'], descriptions: { 'Door': 'The door opens to access frozen food.', 'Shelf': 'Shelves hold frozen food.', 'Drawer': 'Drawers keep frozen items organised.' } },
+            cupboard: { emoji: '🗄️', label: 'Cupboard', subtitle: 'storage', parts: ['Door', 'Shelf', 'Hinge'], descriptions: { 'Door': 'The door opens to access dishes.', 'Shelf': 'Shelves hold plates and bowls.', 'Hinge': 'The hinge allows the door to swing open.' } },
+            drawer: { emoji: '🧰', label: 'Drawer', subtitle: 'utensils', parts: ['Front Panel', 'Handle', 'Inside'], descriptions: { 'Front Panel': 'The front of the drawer.', 'Handle': 'The handle to open the drawer.', 'Inside': 'The inside where utensils are stored.' } },
+            sink: { emoji: '🚰', label: 'Sink', subtitle: 'washing', parts: ['Basin', 'Tap', 'Drain'], descriptions: { 'Basin': 'The basin holds water for washing.', 'Tap': 'The tap controls water flow.', 'Drain': 'The drain lets water out.' } },
+            dishwasher: { emoji: '🧼', label: 'Dishwasher', subtitle: 'cleaning', parts: ['Door', 'Rack', 'Spray Arm'], descriptions: { 'Door': 'The door opens to load dishes.', 'Rack': 'The rack holds plates and bowls.', 'Spray Arm': 'The spray arm cleans the dishes.' } },
+            pantry: { emoji: '🥫', label: 'Pantry', subtitle: 'dry goods', parts: ['Door', 'Shelf', 'Handle'], descriptions: { 'Door': 'The door opens to access food.', 'Shelf': 'Shelves hold canned goods.', 'Handle': 'The handle to open the pantry door.' } },
+            stove: { emoji: '🔥', label: 'Stove', subtitle: 'cooking', parts: ['Burner', 'Knob', 'Knob', 'Top', 'Oven'], descriptions: { 'Burner': 'The burner heats the pan.', 'Knob': 'The knob controls the heat.', 'Top': 'The flat surface where pots sit.', 'Oven': 'The oven bakes and roasts food.' } }
+        };
+
+        // ============================================================
+        // DATA — STATUS OBSERVATIONS
+        // ============================================================
+
+        const OBJECT_STATUSES = {
+            fridge: { emoji: '🧊', label: 'Refrigerator', states: [ { id: 'full', label: 'Full', icon: '🟢', description: 'The refrigerator is full.', context: 'There\'s plenty of food.' }, { id: 'empty', label: 'Empty', icon: '⚪', description: 'The refrigerator is empty.', context: 'Someone needs to go shopping.' }, { id: 'open', label: 'Open', icon: '🚪', description: 'The refrigerator is open.', context: 'Cold air is escaping.' }, { id: 'closed', label: 'Closed', icon: '🔒', description: 'The refrigerator is closed.', context: 'Cold air stays inside.' }, { id: 'cold', label: 'Cold', icon: '❄️', description: 'The refrigerator is cold.', context: 'It\'s working well.' }, { id: 'warm', label: 'Warm', icon: '🔥', description: 'The refrigerator is warm.', context: 'Something might be broken.' }, { id: 'clean', label: 'Clean', icon: '✨', description: 'The refrigerator is clean.', context: 'Someone wiped it down.' }, { id: 'dirty', label: 'Dirty', icon: '🌫️', description: 'The refrigerator is dirty.', context: 'It needs cleaning.' }, { id: 'leaking', label: 'Leaking', icon: '💧', description: 'The refrigerator is leaking.', context: 'Water is dripping.' } ] },
+            stove: { emoji: '🔥', label: 'Stove', states: [ { id: 'on', label: 'On', icon: '🔥', description: 'The stove is on.', context: 'Someone is cooking.' }, { id: 'off', label: 'Off', icon: '⭕', description: 'The stove is off.', context: 'It\'s cool and safe.' }, { id: 'hot', label: 'Hot', icon: '🌡️', description: 'The stove is hot.', context: 'Be careful not to touch it.' }, { id: 'clean', label: 'Clean', icon: '✨', description: 'The stove is clean.', context: 'There\'s no mess.' }, { id: 'dirty', label: 'Dirty', icon: '🌫️', description: 'The stove is dirty.', context: 'It needs cleaning.' } ] },
+            sink: { emoji: '🚰', label: 'Sink', states: [ { id: 'leaking', label: 'Leaking', icon: '💧', description: 'The sink is leaking.', context: 'Water is dripping slowly.' }, { id: 'running', label: 'Running', icon: '💦', description: 'The sink is running.', context: 'Water is flowing.' }, { id: 'draining', label: 'Draining', icon: '🌀', description: 'The sink is draining.', context: 'Water is flowing down.' }, { id: 'clogged', label: 'Clogged', icon: '🚫', description: 'The sink is clogged.', context: 'Water isn\'t draining.' }, { id: 'clean', label: 'Clean', icon: '✨', description: 'The sink is clean.', context: 'It sparkles.' }, { id: 'dirty', label: 'Dirty', icon: '🌫️', description: 'The sink is dirty.', context: 'It needs scrubbing.' } ] },
+            window: { emoji: '🪟', label: 'Window', states: [ { id: 'open', label: 'Open', icon: '🚪', description: 'The window is open.', context: 'Fresh air is coming in.' }, { id: 'closed', label: 'Closed', icon: '🔒', description: 'The window is closed.', context: 'It\'s quiet inside.' }, { id: 'clean', label: 'Clean', icon: '✨', description: 'The window is clean.', context: 'It sparkles.' }, { id: 'dirty', label: 'Dirty', icon: '🌫️', description: 'The window is dirty.', context: 'It needs cleaning.' } ] },
+            cupboard: { emoji: '🗄️', label: 'Cupboard', states: [ { id: 'open', label: 'Open', icon: '🚪', description: 'The cupboard is open.', context: 'Someone got a plate.' }, { id: 'closed', label: 'Closed', icon: '🔒', description: 'The cupboard is closed.', context: 'Everything is tidy.' }, { id: 'empty', label: 'Empty', icon: '⚪', description: 'The cupboard is empty.', context: 'There are no dishes.' }, { id: 'full', label: 'Full', icon: '🟢', description: 'The cupboard is full.', context: 'There\'s plenty of dishes.' } ] },
+            counter: { emoji: '🧽', label: 'Counter', states: [ { id: 'clean', label: 'Clean', icon: '✨', description: 'The counter is clean.', context: 'Someone wiped it down.' }, { id: 'messy', label: 'Messy', icon: '🌫️', description: 'The counter is messy.', context: 'There are crumbs everywhere.' }, { id: 'empty', label: 'Empty', icon: '⚪', description: 'The counter is empty.', context: 'There\'s nothing on it.' }, { id: 'full', label: 'Full', icon: '🟢', description: 'The counter is full.', context: 'There\'s lots of stuff on it.' } ] },
+            pantry: { emoji: '🥫', label: 'Pantry', states: [ { id: 'open', label: 'Open', icon: '🚪', description: 'The pantry is open.', context: 'Someone is getting food.' }, { id: 'closed', label: 'Closed', icon: '🔒', description: 'The pantry is closed.', context: 'Everything is stored.' }, { id: 'empty', label: 'Empty', icon: '⚪', description: 'The pantry is empty.', context: 'There\'s no food.' }, { id: 'full', label: 'Full', icon: '🟢', description: 'The pantry is full.', context: 'There\'s plenty of food.' } ] },
+            dishwasher: { emoji: '🧼', label: 'Dishwasher', states: [ { id: 'running', label: 'Running', icon: '🔄', description: 'The dishwasher is running.', context: 'It\'s washing dishes.' }, { id: 'done', label: 'Done', icon: '✅', description: 'The dishwasher is done.', context: 'The dishes are clean.' }, { id: 'open', label: 'Open', icon: '🚪', description: 'The dishwasher is open.', context: 'Someone is loading it.' }, { id: 'closed', label: 'Closed', icon: '🔒', description: 'The dishwasher is closed.', context: 'It\'s ready to run.' } ] }
+        };
+
+        const OBJECT_KEYS = ['fridge', 'stove', 'sink', 'window', 'cupboard', 'counter', 'pantry', 'dishwasher'];
+
+        // ============================================================
+        // HELPER
+        // ============================================================
+
+        function getItemName(emoji) {
+            const names = { '🥛': 'Milk', '🍎': 'Apple', '🍦': 'Ice cream', '🥩': 'Frozen meat', '🍽️': 'Plate', '☕': 'Cup', '🍴': 'Fork', '🥄': 'Spoon', '🧽': 'Sponge', '💧': 'Water', '🍚': 'Rice', '🥫': 'Canned food', '🍳': 'Eggs', '🥘': 'Stew' };
+            return names[emoji] || 'food';
+        }
+
+        // ============================================================
+        // STATE
+        // ============================================================
+
+        let placeholderReturnTo = 's-worlds';
+        let exploredWalks = {};
+        let currentWalkKey = 'fridge';
+        let doorAnimationInProgress = false;
+        let walkState = 'opening';
+        let selectedObject = 'fridge';
+        let selectedPart = null;
+        let partsExplored = new Set();
+        let currentObservations = [];
+        let detailObjectKey = 'fridge';
+        let detailStatusId = null;
+
+        // ============================================================
+        // POSITION DATA
+        // ============================================================
+
+        const POSITION_DATA = [
+            { sentence: 'Food is ______ the refrigerator.', preposition: 'in', full: 'Food is in the refrigerator.' },
+            { sentence: 'Milk is ______ the refrigerator.', preposition: 'in', full: 'Milk is in the refrigerator.' },
+            { sentence: 'The magnet is ______ the refrigerator.', preposition: 'on', full: 'The magnet is on the refrigerator.' },
+            { sentence: 'The pot is ______ the stove.', preposition: 'on', full: 'The pot is on the stove.' },
+            { sentence: 'The plates are ______ the cupboard.', preposition: 'in', full: 'The plates are in the cupboard.' },
+            { sentence: 'Water goes ______ the sink.', preposition: 'into', full: 'Water goes into the sink.' },
+            { sentence: 'The spoon is ______ the drawer.', preposition: 'in', full: 'The spoon is in the drawer.' },
+            { sentence: 'The plate is ______ the countertop.', preposition: 'on', full: 'The plate is on the countertop.' },
+            { sentence: 'The pan is ______ the stove.', preposition: 'on', full: 'The pan is on the stove.' },
+            { sentence: 'The curtains hang ______ the window.', preposition: 'over', full: 'The curtains hang over the window.' },
+            { sentence: 'The light hangs ______ the table.', preposition: 'above', full: 'The light hangs above the table.' }
+        ];
+
+        let positionIndex = 0;
+        let positionTapped = false;
+
+        // ============================================================
+        // ACTION DATA — 8 examples
+        // ============================================================
+
+        const ACTION_DATA = [
+            {
+                verbs: ['I cook.', 'I fry.', 'I boil.', 'I steam.'],
+                options: ['Refrigerator', 'Cupboard', 'Stove', 'Sink'],
+                correct: 'Stove',
+                identity: "I'm a stove.",
+                explanation: 'You cook, fry, boil and steam on a stove.'
+            },
+            {
+                verbs: ['I store dishes.', 'I hold cups.', 'I keep things organized.'],
+                options: ['Cupboard', 'Drawer', 'Pantry', 'Counter'],
+                correct: 'Cupboard',
+                identity: "I'm a cupboard.",
+                explanation: 'You store dishes, cups and other things in a cupboard.'
+            },
+            {
+                verbs: ['I freeze food.', 'I keep things frozen.', 'I preserve food.'],
+                options: ['Refrigerator', 'Freezer', 'Pantry', 'Cupboard'],
+                correct: 'Freezer',
+                identity: "I'm a freezer.",
+                explanation: 'You freeze and preserve food in a freezer.'
+            },
+            {
+                verbs: ['I store dry food.', 'I hold cans.', 'I keep rice and pasta.'],
+                options: ['Pantry', 'Cupboard', 'Refrigerator', 'Drawer'],
+                correct: 'Pantry',
+                identity: "I'm a pantry.",
+                explanation: 'You store dry food, cans, rice and pasta in a pantry.'
+            },
+            {
+                verbs: ['I wash dishes.', 'I fill with water.', 'I rinse.'],
+                options: ['Sink', 'Dishwasher', 'Counter', 'Stove'],
+                correct: 'Sink',
+                identity: "I'm a sink.",
+                explanation: 'You wash dishes in the sink.'
+            },
+            {
+                verbs: ['I wash dishes.', 'I clean automatically.', 'I dry.'],
+                options: ['Sink', 'Dishwasher', 'Stove', 'Cupboard'],
+                correct: 'Dishwasher',
+                identity: "I'm a dishwasher.",
+                explanation: 'You load dirty dishes and I wash them.'
+            },
+            {
+                verbs: ['I keep food fresh.', 'I store milk.', 'I hold vegetables.'],
+                options: ['Freezer', 'Refrigerator', 'Pantry', 'Cupboard'],
+                correct: 'Refrigerator',
+                identity: "I'm a refrigerator.",
+                explanation: 'You store fresh food in the refrigerator.'
+            },
+            {
+                verbs: ['I hold forks.', 'I organize spoons.', 'I store knives.'],
+                options: ['Drawer', 'Cupboard', 'Pantry', 'Counter'],
+                correct: 'Drawer',
+                identity: "I'm a drawer.",
+                explanation: 'You store utensils in the drawer.'
+            }
+        ];
+
+        let actionIndex = 0;
+        let actionAnswered = false;
+        let actionSelected = null;
+
+        // ============================================================
+        // SPEAK
+        // ============================================================
+
+        let conversationStage = 0;
+        let isRecording = false;
+        let isProcessing = false;
+        let recognition = null;
+        let conversationMessages = [];
+        let isTyping = false;
+        let isDemoMode = true;
+        let demoIndex = 0;
+
+        const DEMO_CONVERSATION = [
+            { role: 'ai', text: "Hey! How was your kitchen lesson?" },
+            { role: 'learner', text: "It was good! I learned a lot." },
+            { role: 'ai', text: "It sounds like you learned a lot! What did you learn about the refrigerator?" },
+            { role: 'learner', text: "I learned the refrigerator is cold and has shelves." },
+            { role: 'ai', text: "Nice! And where do you keep milk?" },
+            { role: 'learner', text: "I keep milk on the refrigerator." },
+            { role: 'ai', text: "", correction: "Almost! We say 'in the refrigerator'. Try again!", suggestion: "in the refrigerator" },
+            { role: 'learner', text: "I keep milk in the refrigerator.", perfect: "✓ Perfect! ✨" },
+            { role: 'ai', text: "Perfect! Where do you cook food?" },
+            { role: 'learner', text: "I cook on the stove.", perfect: "✓ Perfect! ✨" },
+            { role: 'ai', text: "Great! What do you do at the sink?" },
+            { role: 'learner', text: "I wash dishes at the sink.", perfect: "✓ Perfect! ✨" },
+            { role: 'ai', text: "Excellent! Where do you store dry food like rice and pasta?" },
+            { role: 'learner', text: "I store dry food in the pantry.", perfect: "✓ Perfect! ✨" },
+            { role: 'ai', text: "That's right! One more question — what do you use the stove for?" },
+            { role: 'learner', text: "I use the stove to cook food.", perfect: "✓ Perfect! ✨" },
+            { role: 'ai', text: "Wonderful! You've learned so much about the kitchen. Want to explore another room?" },
+            { role: 'learner', text: "Yes, I'd love to!" },
+            { role: 'ai', text: "🎉 Great! Let's continue your journey. You're ready for the next room." }
+        ];
+
+        const CONVERSATION_FLOW = [
+            { ai: "Hey! How was your kitchen lesson?", expected: null, correction: null, responseType: 'open' },
+            { ai: "It sounds like you learned a lot! What did you learn about the refrigerator?", expected: ['cold', 'store', 'food', 'milk', 'door', 'shelf', 'keep'], correction: { detect: (text) => { if (text.toLowerCase().includes('on the refrigerator') || text.toLowerCase().includes('at the refrigerator')) { return { message: "We usually say 'in the refrigerator'. Try again!", suggestion: 'in the refrigerator' }; } return null; } }, responseType: 'open' },
+            { ai: "Nice! And where do you keep milk?", expected: ['refrigerator', 'fridge', 'in'], correction: { detect: (text) => { if (text.toLowerCase().includes('on') && !text.toLowerCase().includes('refrigerator') && !text.toLowerCase().includes('fridge')) { return { message: "We usually say 'in the refrigerator'. Try again!", suggestion: 'in the refrigerator' }; } if (text.toLowerCase().includes('on') && (text.toLowerCase().includes('refrigerator') || text.toLowerCase().includes('fridge'))) { return { message: "Almost! We say 'in the refrigerator', not 'on'. Try again!", suggestion: 'in the refrigerator' }; } return null; } }, responseType: 'open' },
+            { ai: "Perfect! Where do you cook food?", expected: ['stove', 'oven', 'kitchen', 'cook'], correction: { detect: (text) => { if (text.toLowerCase().includes('fridge') || text.toLowerCase().includes('refrigerator') || text.toLowerCase().includes('sink')) { return { message: "You usually cook on a stove. Can you try that?", suggestion: 'I cook on the stove.' }; } return null; } }, responseType: 'open' },
+            { ai: "Great! What do you do at the sink?", expected: ['wash', 'dishes', 'clean', 'rinse', 'hands', 'water'], correction: { detect: (text) => { if (text.toLowerCase().includes('cook') || text.toLowerCase().includes('store') || text.toLowerCase().includes('freeze')) { return { message: "At the sink, we usually wash things. Try that!", suggestion: 'I wash dishes at the sink.' }; } return null; } }, responseType: 'open' },
+            { ai: "Excellent! Where do you store dry food like rice and pasta?", expected: ['pantry', 'cupboard', 'cabinet'], correction: { detect: (text) => { if (text.toLowerCase().includes('fridge') || text.toLowerCase().includes('refrigerator') || text.toLowerCase().includes('freezer')) { return { message: "Dry food goes in the pantry or cupboard. Try that!", suggestion: 'I store dry food in the pantry.' }; } return null; } }, responseType: 'open' },
+            { ai: "That's right! One more question — what do you use the stove for?", expected: ['cook', 'fry', 'boil', 'steam', 'heat', 'make food'], correction: { detect: (text) => { if (!text || text.length < 3) { return { message: "You use the stove to cook food. Can you say that?", suggestion: 'I use the stove to cook food.' }; } return null; } }, responseType: 'open' },
+            { ai: "Wonderful! You've learned so much about the kitchen. Want to explore another room?", expected: null, correction: null, responseType: 'open', isEnd: true }
+        ];
+
+        // ============================================================
+        // LANDING CAROUSEL
+        // ============================================================
+
+        const WORLDS = ['home', 'street', 'park', 'hospital', 'airport', 'market', 'farm', 'school', 'beach', 'workshop'];
+        let currentWorldIndex = 0;
+        let isAnimating = false;
+
+        function selectWorld(worldId) {
+            const index = WORLDS.indexOf(worldId);
+            if (index === -1) return;
+            if (isAnimating) return;
+
+            const chip = document.querySelector(`.world-item[data-world="${worldId}"]`);
+            if (chip && chip.classList.contains('coming')) {
+                chip.style.transition = 'all 0.2s ease';
+                chip.style.opacity = '0.5';
+                setTimeout(() => { chip.style.opacity = ''; }, 300);
+                return;
+            }
+
+            goToWorld(index);
+        }
+
+        function goToWorld(index) {
+            if (isAnimating) return;
+            if (index < 0 || index >= WORLDS.length) return;
+
+            isAnimating = true;
+            currentWorldIndex = index;
+
+            const track = document.getElementById('heroTrack');
+            const offset = -index * 100;
+            track.style.transform = `translateX(${offset}%)`;
+
+            const chips = document.querySelectorAll('.world-item');
+            chips.forEach((chip, i) => {
+                chip.classList.toggle('active', i === index);
+                if (chip.classList.contains('coming')) {
+                    chip.classList.remove('active');
+                }
+            });
+
+            setTimeout(() => { isAnimating = false; }, 400);
+        }
+
+        // ============================================================
+        // NAVIGATION
+        // ============================================================
+
+        function goTo(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(id);
+            if (target) target.classList.add('active');
+            if (target) target.scrollTop = 0;
+
+            const nav = document.getElementById('bottomNav');
+            const learningScreens = ['s-space', 's-part', 's-condition', 's-position', 's-action', 's-speak'];
+            if (learningScreens.includes(id)) {
+                nav.classList.add('show');
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.screen === id);
+                });
+            } else {
+                nav.classList.remove('show');
+            }
+
+            if (id === 's-part') { renderParts(selectedObject); }
+            if (id === 's-condition') { renderStatus(); }
+            if (id === 's-position') { renderPosition(); }
+            if (id === 's-action') { renderAction(); }
+            if (id === 's-speak') { renderSpeak(); }
+        }
+
+        function showPlaceholder(returnTo) {
+            placeholderReturnTo = returnTo;
+            goTo('s-placeholder');
+        }
+
+        // ============================================================
+        // DOOR ANIMATION → SPACE
+        // ============================================================
+
+        function startWalk(key) {
+            if (doorAnimationInProgress) return;
+            doorAnimationInProgress = true;
+            walkState = 'opening';
+
+            const overlay = document.getElementById('doorOverlay');
+            const door = document.getElementById('doorAnim');
+            const label = document.getElementById('doorLabel');
+            const doorFace = document.getElementById('doorFace');
+            const doorEmoji = document.getElementById('doorEmoji');
+
+            const data = WALK_DATA[key];
+            const objName = data.title;
+
+            doorFace.className = 'door-face tone-' + (data.tone || 'neutral');
+            doorEmoji.textContent = data.emoji;
+
+            door.classList.remove('open');
+            label.classList.remove('show');
+            overlay.classList.add('show');
+
+            label.textContent = `Opening ${objName}...`;
+
+            setTimeout(() => {
+                speak(`Let's open the ${objName}.`);
+                door.classList.add('open');
+                setTimeout(() => { label.classList.add('show'); label.textContent = `✨ ${objName}`; }, 400);
+            }, 400);
+
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                door.classList.remove('open');
+                label.classList.remove('show');
+                doorAnimationInProgress = false;
+
+                exploredWalks[key] = true;
+                currentWalkKey = key;
+                selectedObject = key;
+                renderSpace(key);
+                goTo('s-space');
+
+                walkState = 'observing';
+                updateSpaceBadge('observing');
+
+                setTimeout(() => {
+                    walkState = 'listening';
+                    updateSpaceBadge('listening');
+                    showCompanion(key);
+                }, 500);
+
+            }, 1300);
+        }
+
+        // ============================================================
+        // RENDER SPACE
+        // ============================================================
+
+        function renderSpace(key) {
+            const data = WALK_DATA[key];
+            if (!data) return;
+
+            const container = document.getElementById('space-content');
+
+            let rowsHTML = data.scene.map(row => `
+                <div class="row">
+                    ${row.map(emoji => `
+                        <span class="item" data-emoji="${emoji}">
+                            ${emoji}
+                            <span class="item-label">${getItemName(emoji)}</span>
+                        </span>
+                    `).join('')}
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="walk-header">
+                    <span class="wh-emoji">${data.emoji}</span>
+                    <span class="wh-title">${data.title}</span>
+                    <span class="wh-badge observing" id="spaceBadge">👀 Observe</span>
+                </div>
+
+                <div class="walk-scene" id="walkScene">
+                    <span class="scene-label" id="sceneLabel">Take a look</span>
+                    <div class="scene-emoji-grid" id="emojiGrid">
+                        ${rowsHTML}
+                    </div>
+                </div>
+
+                <div class="companion-bubble" id="companionBubble">
+                    <div class="companion-text" id="companionText">
+                        <span class="speaker-label">🧠 Companion</span>
+                    </div>
+                </div>
+
+                <div class="walk-footer">
+                    <button class="btn-secondary" onclick="goTo('s-kitchen-entrance')">← Kitchen</button>
+                    <button class="btn-primary" id="walkNextBtn" onclick="nextWalk()" disabled>Next →</button>
+                </div>
+            `;
+
+            document.getElementById('space-back-label').textContent = 'Kitchen Walk';
+
+            const items = document.querySelectorAll('#emojiGrid .item');
+            items.forEach((item, index) => {
+                setTimeout(() => { item.classList.add('fade-in'); }, 200 + (index * 200));
+            });
+        }
+
+        // ============================================================
+        // COMPANION
+        // ============================================================
+
+        function showCompanion(key) {
+            const data = WALK_DATA[key];
+            const lines = data.companion;
+
+            const bubble = document.getElementById('companionBubble');
+            const textEl = document.getElementById('companionText');
+
+            const linesHTML = lines.map(line => `<span class="line">${line}</span>`).join('');
+
+            textEl.innerHTML = `<span class="speaker-label">🧠 Companion</span>${linesHTML}`;
+
+            bubble.classList.add('show');
+
+            const fullText = lines.join(' ');
+            speak(fullText);
+
+            walkState = 'exploring';
+            updateSpaceBadge('exploring');
+
+            setTimeout(() => {
+                const nextBtn = document.getElementById('walkNextBtn');
+                if (nextBtn) nextBtn.disabled = false;
+                walkState = 'found';
+                updateSpaceBadge('found');
+            }, 2600);
+        }
+
+        function updateSpaceBadge(state) {
+            const badge = document.getElementById('spaceBadge');
+            if (!badge) return;
+            const states = { observing: { text: '👀 Observe', class: 'observing' }, listening: { text: '🎧 Listening', class: 'listening' }, exploring: { text: '🔍 Explore', class: 'exploring' }, found: { text: '✅ Done', class: 'found' } };
+            const s = states[state] || states.observing;
+            badge.textContent = s.text;
+            badge.className = 'wh-badge ' + s.class;
+        }
+
+        function nextWalk() {
+            if (walkState !== 'found') return;
+            const explored = WALK_ORDER.filter(k => exploredWalks[k]);
+            const total = WALK_ORDER.length;
+            if (explored.length === total) { goTo('s-completion'); return; }
+            const next = WALK_ORDER.find(k => !exploredWalks[k]);
+            if (next) { startWalk(next); }
+        }
+
+        // ============================================================
+        // RENDER PARTS
+        // ============================================================
+
+        function renderParts(objectKey) {
+            const data = PARTS_DATA[objectKey];
+            if (!data) return;
+
+            const container = document.getElementById('part-content');
+            selectedObject = objectKey;
+            selectedPart = null;
+
+            const objectKeys = Object.keys(PARTS_DATA);
+            let selectorHTML = objectKeys.map(key => {
+                const obj = PARTS_DATA[key];
+                const isActive = key === objectKey;
+                return `<button class="obj-chip ${isActive ? 'active' : ''}" onclick="switchPartsObject('${key}')"><span class="chip-emoji">${obj.emoji}</span><span class="chip-label">${obj.label}</span></button>`;
+            }).join('');
+
+            let diagramParts = '';
+            const partMap = { 'Top': 'part-top', 'Door': 'part-door', 'Shelf': 'part-shelf-1', 'Drawer': 'part-drawer' };
+            let partIndex = {};
+            data.parts.forEach(p => {
+                const baseId = p.replace(/\s/g, '-').toLowerCase();
+                if (!partIndex[baseId]) partIndex[baseId] = 0;
+                partIndex[baseId]++;
+                let cssClass = partMap[p] || 'part-' + baseId;
+                if (p === 'Shelf' && partIndex['shelf'] === 2) cssClass = 'part-shelf-2';
+                diagramParts += `<div class="part ${cssClass}" data-part="${p}" onclick="selectPart('${p}')"><span class="part-label">${p}</span></div>`;
+            });
+
+            let chipsHTML = data.parts.map(p => `<button class="part-chip" data-part="${p}" onclick="selectPart('${p}')">${p}</button>`).join('');
+
+            container.innerHTML = `
+                <div class="object-selector">${selectorHTML}</div>
+                <div class="parts-scene" id="partsScene">
+                    <span class="scene-object-label">${data.emoji} ${data.label}</span>
+                    <div class="fridge-diagram" id="fridgeDiagram">${diagramParts}</div>
+                </div>
+                <div class="parts-list" id="partsList">${chipsHTML}</div>
+                <div class="companion-bubble" id="partCompanionBubble">
+                    <div class="companion-text" id="partCompanionText"><span class="speaker-label">🧠 Companion</span><span class="line">Tap a part to learn more.</span></div>
+                </div>
+                <div class="parts-footer">
+                    <button class="btn-secondary" onclick="goTo('s-space')">← Space</button>
+                    <button class="btn-primary" id="partNextBtn" onclick="goTo('s-condition')" disabled>Next →</button>
+                </div>
+            `;
+
+            document.getElementById('part-back-label').textContent = 'Parts';
+            partsExplored = new Set();
+
+            setTimeout(() => {
+                const bubble = document.getElementById('partCompanionBubble');
+                bubble.classList.add('show');
+                const introText = `This is a ${data.label}. ${data.subtitle}. Tap a part to learn more.`;
+                speak(introText);
+                const textEl = document.getElementById('partCompanionText');
+                textEl.innerHTML = `<span class="speaker-label">🧠 Companion</span><span class="line">This is a ${data.label}.</span><span class="line">${data.subtitle}.</span><span class="line">Tap a part to learn more.</span>`;
+            }, 300);
+        }
+
+        function switchPartsObject(key) {
+            if (key === selectedObject) return;
+            selectedObject = key;
+            partsExplored = new Set();
+            renderParts(key);
+        }
+
+        function selectPart(partName) {
+            const data = PARTS_DATA[selectedObject];
+            if (!data) return;
+            const description = data.descriptions[partName] || 'A part of the ' + data.label + '.';
+            selectedPart = partName;
+            partsExplored.add(partName);
+
+            document.querySelectorAll('.fridge-diagram .part').forEach(el => {
+                const pName = el.dataset.part;
+                if (pName === partName) { el.classList.add('highlight'); el.classList.remove('dimmed'); }
+                else { el.classList.remove('highlight'); el.classList.add('dimmed'); }
+            });
+
+            document.querySelectorAll('.part-chip').forEach(chip => {
+                chip.classList.toggle('active', chip.dataset.part === partName);
+            });
+
+            const bubble = document.getElementById('partCompanionBubble');
+            const textEl = document.getElementById('partCompanionText');
+            textEl.innerHTML = `<span class="speaker-label">🧠 Companion</span><span class="line">${partName}.</span><span class="line">${description}</span>`;
+            bubble.classList.add('show');
+            speak(`${partName}. ${description}`);
+
+            const nextBtn = document.getElementById('partNextBtn');
+            if (nextBtn && partsExplored.size >= 2) { nextBtn.disabled = false; nextBtn.textContent = 'Next →'; }
+            else if (nextBtn) { const remaining = 2 - partsExplored.size; nextBtn.textContent = `Explore ${remaining} more part${remaining > 1 ? 's' : ''}`; }
+        }
+
+        // ============================================================
+        // RENDER STATUS
+        // ============================================================
+
+        function getTodayObservations() {
+            const observations = [];
+            const shuffledKeys = [...OBJECT_KEYS].sort(() => Math.random() - 0.5);
+            const count = Math.min(6, shuffledKeys.length);
+            for (let i = 0; i < count; i++) {
+                const key = shuffledKeys[i];
+                const obj = OBJECT_STATUSES[key];
+                if (!obj) continue;
+                const randomState = obj.states[Math.floor(Math.random() * obj.states.length)];
+                observations.push({ objectKey: key, objectEmoji: obj.emoji, objectLabel: obj.label, statusId: randomState.id, statusLabel: randomState.label, statusIcon: randomState.icon, description: randomState.description, context: randomState.context });
+            }
+            return observations;
+        }
+
+        function renderStatus() {
+            currentObservations = getTodayObservations();
+            const container = document.getElementById('status-content');
+            let cardsHTML = currentObservations.map(obs => `
+                <div class="obs-card" onclick="openDetail('${obs.objectKey}', '${obs.statusId}')">
+                    <span class="obs-emoji">${obs.objectEmoji}</span>
+                    <div class="obs-info"><div class="obs-label">${obs.objectLabel} is ${obs.statusLabel}</div></div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="status-header">
+                    <span class="sh-emoji">🍳</span>
+                    <span class="sh-title">Today's Kitchen</span>
+                    <span class="sh-badge">${currentObservations.length}</span>
+                </div>
+                <div class="status-subtitle">What's happening today?</div>
+                <div class="observation-deck">${cardsHTML}</div>
+                <div style="display:flex; justify-content:center; gap:8px; margin-bottom:6px;">
+                    <button class="refresh-btn" onclick="renderStatus()" style="background:none;border:1.5px solid rgba(0,0,0,0.06);border-radius:30px;padding:6px 16px;font-size:11px;color:#888;cursor:pointer;font-family:inherit;">🔄 New observations</button>
+                </div>
+                <div class="status-footer" style="display:flex;gap:10px;justify-content:space-between;margin-top:auto;padding-top:8px;flex-shrink:0;">
+                    <button class="btn-secondary" onclick="goTo('s-part')">← Parts</button>
+                    <button class="btn-primary" onclick="goTo('s-position')">Position →</button>
+                </div>
+            `;
+
+            document.getElementById('status-back-label').textContent = 'Status';
+            document.getElementById('statusBadge').textContent = '🔄 Today';
+            setTimeout(() => { speak(`Take a look around. What's happening in the kitchen today?`); }, 400);
+        }
+
+        function openDetail(objectKey, statusId) {
+            detailObjectKey = objectKey;
+            detailStatusId = statusId;
+            renderDetail(objectKey, statusId);
+            goTo('s-status-detail');
+        }
+
+        function renderDetail(objectKey, statusId) {
+            const data = OBJECT_STATUSES[objectKey];
+            if (!data) return;
+            const state = data.states.find(s => s.id === statusId);
+            if (!state) return;
+
+            const container = document.getElementById('detail-content');
+            const currentObs = currentObservations.find(o => o.objectKey === objectKey);
+            const currentStatusLabel = currentObs ? currentObs.statusLabel : '—';
+
+            let chipsHTML = data.states.map(s => {
+                const isActive = s.id === statusId;
+                const isCurrent = s.label === currentStatusLabel;
+                return `<button class="status-chip ${isActive ? 'active' : ''}" onclick="renderDetail('${objectKey}', '${s.id}')"><span class="chip-icon">${s.icon}</span>${s.label}${isCurrent ? ' 🟢' : ''}</button>`;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="detail-status-icon">${state.icon}</div>
+                <div class="detail-title">${state.label}</div>
+                <div class="detail-description">${state.description}</div>
+                <div class="detail-context">${state.context}</div>
+                <button class="detail-listen" onclick="speak('${state.description} ${state.context}')">🔊 Listen</button>
+                <hr class="detail-divider" />
+                <div class="detail-how-else">✨ How else can it be?</div>
+                <div class="detail-chips">${chipsHTML}</div>
+                <div class="detail-footer">
+                    <button class="btn-secondary" onclick="goTo('s-condition')">← Kitchen</button>
+                    <button class="btn-primary" onclick="goTo('s-position')">Position →</button>
+                </div>
+            `;
+
+            document.getElementById('detail-back-label').textContent = 'Status';
+            document.getElementById('detailBadge').textContent = '🔍 ' + data.label;
+            setTimeout(() => { speak(`${state.description} ${state.context}`); }, 300);
+        }
+
+        // ============================================================
+        // RENDER POSITION
+        // ============================================================
+
+        function renderPosition() {
+            const container = document.getElementById('position-content');
+            const data = POSITION_DATA[positionIndex];
+
+            if (!data) {
+                container.innerHTML = `
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:20px;">
+                        <div style="font-size:48px;">🌿</div>
+                        <div style="font-size:22px;font-weight:600;color:#2a1a0a;">You've walked through Position</div>
+                        <div style="font-size:15px;color:#666;max-width:240px;">Spatial language, naturally.</div>
+                        <button class="btn-primary" onclick="resetPosition()" style="max-width:180px;margin-top:8px;">Walk again</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const total = POSITION_DATA.length;
+            const progress = `${positionIndex + 1} / ${total}`;
+
+            let blankClass = 'blank';
+            let blankInner = '';
+            if (positionTapped) { blankClass += ' filled'; blankInner = `<span class="sliding-word">${data.preposition}</span>`; }
+
+            const sentenceHTML = data.sentence.replace('______', `<span class="${blankClass}">${blankInner || ' '}</span>`);
+
+            let chipHTML = '';
+            if (!positionTapped) {
+                chipHTML = `<div class="pos-chip-wrapper"><div class="pos-chip" id="prepChip" onclick="tapPreposition()"><span class="chip-text">${data.preposition}</span><span class="chip-hint">tap</span></div></div><div class="pos-arrow" id="posArrow">↓</div>`;
+            } else {
+                chipHTML = `<div class="pos-chip-wrapper"><div class="pos-chip tapped" id="prepChip"><span class="chip-text">${data.preposition}</span></div></div><div class="pos-arrow done" id="posArrow">✓</div>`;
+            }
+
+            let feedbackHTML = '';
+            if (positionTapped) {
+                feedbackHTML = `<div class="pos-feedback show" id="posFeedback"><span class="fb-icon">✔</span><span class="fb-text">${data.full}</span><button class="listen-btn" onclick="speak('${data.full}')">🔊</button></div>`;
+            } else {
+                feedbackHTML = `<div class="pos-feedback" id="posFeedback" style="border-left-color:transparent;background:transparent;min-height:0;padding:0 14px;"><span style="opacity:0;">·</span></div>`;
+            }
+
+            let nextObjects = [];
+            for (let i = positionIndex + 1; i < Math.min(positionIndex + 4, POSITION_DATA.length); i++) {
+                const next = POSITION_DATA[i];
+                const match = next.sentence.match(/the\s+(\w+)/);
+                const objName = match ? match[1] : null;
+                if (objName && !nextObjects.some(n => n === objName)) { nextObjects.push(objName); }
+            }
+
+            let nextHTML = '';
+            if (nextObjects.length > 0) {
+                nextHTML = `<hr class="pos-divider" /><div class="pos-next-row ${positionTapped ? 'show' : ''}" id="nextRow"><span class="next-label">→</span>${nextObjects.map(obj => `<span class="next-chip">${obj}</span>`).join('')}</div>`;
+            }
+
+            container.innerHTML = `
+                <div class="pos-header"><span class="pos-counter">${progress}</span></div>
+                <div class="pos-card">
+                    <div class="pos-sentence">${sentenceHTML}</div>
+                    ${chipHTML}
+                    ${feedbackHTML}
+                    ${nextHTML}
+                    <div class="pos-footer">
+                        <button class="btn-secondary" onclick="goTo('s-condition')" style="max-width:100px;padding:10px 16px;font-size:13px;">← Kitchen</button>
+                        <button class="btn-primary" id="posNextBtn" onclick="nextPosition()" style="max-width:100px;padding:10px 16px;font-size:13px;" ${!positionTapped ? 'disabled' : ''}>Next →</button>
+                    </div>
+                </div>
+            `;
+
+            if (!positionTapped) {
+                const clean = data.sentence.replace('______', '____');
+                setTimeout(() => speak(clean), 250);
+            }
+        }
+
+        function tapPreposition() {
+            if (positionTapped) return;
+            positionTapped = true;
+            const chip = document.getElementById('prepChip');
+            if (chip) { chip.classList.add('tapped'); }
+            setTimeout(() => {
+                renderPosition();
+                setTimeout(() => {
+                    const feedback = document.getElementById('posFeedback');
+                    if (feedback) { feedback.classList.add('show'); }
+                    const nextRow = document.getElementById('nextRow');
+                    if (nextRow) { nextRow.classList.add('show'); }
+                    speak(POSITION_DATA[positionIndex].full);
+                }, 150);
+            }, 250);
+        }
+
+        function nextPosition() {
+            if (!positionTapped) return;
+            if (positionIndex < POSITION_DATA.length - 1) { positionIndex++; positionTapped = false; renderPosition(); }
+            else { renderPosition(); }
+        }
+
+        function resetPosition() { positionIndex = 0; positionTapped = false; renderPosition(); }
+
+        // ============================================================
+        // RENDER ACTION — 8 examples with visible Next button
+        // ============================================================
+
+        function renderAction() {
+            const container = document.getElementById('action-content');
+            const data = ACTION_DATA[actionIndex];
+
+            if (!data) {
+                container.innerHTML = `
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:20px;">
+                        <div style="font-size:48px;">🌿</div>
+                        <div style="font-size:22px;font-weight:600;color:#2a1a0a;">You've walked through Action</div>
+                        <div style="font-size:15px;color:#666;max-width:240px;">Verbs and objects, naturally.</div>
+                        <button class="btn-primary" onclick="resetAction()" style="max-width:180px;margin-top:8px;">Walk again</button>
+                    </div>
+                `;
+                return;
+            }
+
+            const total = ACTION_DATA.length;
+            const progress = `${actionIndex + 1} / ${total}`;
+
+            let verbsHTML = data.verbs.map(v => `<div class="verb-line">${v}</div>`).join('');
+
+            let optionsHTML = data.options.map(opt => {
+                let cls = 'opt-btn';
+                if (actionAnswered) {
+                    cls += ' disabled';
+                    if (opt === data.correct) { cls += ' correct'; }
+                    if (actionSelected === opt && opt !== data.correct) { cls += ' wrong'; }
+                } else if (actionSelected === opt) { cls += ' selected'; }
+                return `<button class="${cls}" onclick="selectActionOption('${opt}')" ${actionAnswered ? 'disabled' : ''}>${opt}</button>`;
+            }).join('');
+
+            let feedbackHTML = '';
+            if (actionAnswered) {
+                const isCorrect = (actionSelected === data.correct);
+                const verbList = data.verbs.map(v => `<span class="fb-verb">${v}</span>`).join('');
+                feedbackHTML = `
+                    <div class="action-feedback show" id="actionFeedback">
+                        <div class="fb-top">
+                            <span class="fb-icon">✓</span>
+                            <span class="fb-identity">${isCorrect ? data.identity : "I'm a " + data.correct + '.'}</span>
+                            <button class="listen-btn" onclick="speak('${data.explanation}')">🔊</button>
+                        </div>
+                        <div class="fb-verbs">${verbList}</div>
+                        <div class="fb-explanation">${data.explanation}</div>
+                    </div>
+                `;
+            } else {
+                feedbackHTML = `<div class="action-feedback" id="actionFeedback"><span style="opacity:0;">·</span></div>`;
+            }
+
+            let nextObjects = [];
+            for (let i = actionIndex + 1; i < Math.min(actionIndex + 4, ACTION_DATA.length); i++) {
+                const next = ACTION_DATA[i];
+                if (next && !nextObjects.some(n => n === next.correct)) { nextObjects.push(next.correct); }
+            }
+
+            let nextHTML = '';
+            if (nextObjects.length > 0) {
+                nextHTML = `
+                    <div class="action-next-row ${actionAnswered ? 'show' : ''}" id="nextRow">
+                        <span class="next-label">→</span>
+                        ${nextObjects.map(obj => `<span class="next-chip">${obj}</span>`).join('')}
+                    </div>
+                `;
+            }
+
+            container.innerHTML = `
+                <div class="action-header"><span class="action-counter">${progress}</span></div>
+                <div class="action-puzzle">
+                    <div class="action-verbs">${verbsHTML}</div>
+                    <hr class="action-divider" />
+                    <div class="action-who">Who am I?</div>
+                    <div class="action-options">${optionsHTML}</div>
+                    ${feedbackHTML}
+                    ${nextHTML}
+                    <div class="action-footer">
+                        <button class="btn-secondary" onclick="goTo('s-condition')">← Kitchen</button>
+                        <button class="btn-primary" id="actionNextBtn" onclick="nextAction()" ${!actionAnswered ? 'disabled' : ''}>Next →</button>
+                    </div>
+                </div>
+            `;
+
+            if (!actionAnswered) {
+                const verbText = data.verbs.join(' ');
+                setTimeout(() => speak(verbText), 300);
+            }
+        }
+
+        function selectActionOption(optionId) {
+            if (actionAnswered) return;
+            actionSelected = optionId;
+            actionAnswered = true;
+            const data = ACTION_DATA[actionIndex];
+            const isCorrect = (optionId === data.correct);
+            renderAction();
+            if (isCorrect) { setTimeout(() => speak(`${data.identity} ${data.explanation}`), 250); }
+            else { setTimeout(() => speak(`Try again. ${data.explanation}`), 250); }
+        }
+
+        function nextAction() {
+            if (!actionAnswered) return;
+            if (actionIndex < ACTION_DATA.length - 1) {
+                actionIndex++;
+                actionAnswered = false;
+                actionSelected = null;
+                renderAction();
+            } else {
+                // Show completion
+                const container = document.getElementById('action-content');
+                container.innerHTML = `
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center;padding:20px;">
+                        <div style="font-size:56px;">🎉</div>
+                        <div style="font-size:22px;font-weight:600;color:#2a1a0a;font-family:'Fraunces',serif;">You've completed Action!</div>
+                        <div style="font-size:15px;color:#666;max-width:240px;line-height:1.6;">You've learned the actions for all 8 kitchen objects.</div>
+                        <button class="btn-primary" onclick="goTo('s-speak')" style="max-width:180px;margin-top:8px;">Continue to Speak →</button>
+                    </div>
+                `;
+            }
+        }
+
+        function resetAction() {
+            actionIndex = 0;
+            actionAnswered = false;
+            actionSelected = null;
+            renderAction();
+        }
+
+        // ============================================================
+        // RENDER SPEAK
+        // ============================================================
+
+        function renderSpeak() {
+            const container = document.getElementById('speak-content');
+
+            let messagesHTML = conversationMessages.map(msg => {
+                const isAI = msg.role === 'ai';
+                const label = isAI ? '🧠 AI' : '🎙️ You';
+                const bubbleClass = isAI ? 'ai' : 'learner';
+
+                let extraHTML = '';
+                if (msg.correction) {
+                    extraHTML = `<div class="msg-correction">${msg.correction}<span class="correction-suggestion">→ ${msg.suggestion}</span><button class="listen-btn" onclick="speakText('${msg.suggestion}')">🔊</button></div>`;
+                }
+                if (msg.perfect) { extraHTML = `<div class="msg-perfect">${msg.perfect}</div>`; }
+
+                return `<div class="message ${bubbleClass}"><span class="msg-label">${label}</span><div class="msg-bubble">${msg.text}</div>${extraHTML}</div>`;
+            }).join('');
+
+            if (isTyping) {
+                messagesHTML += `<div class="typing-indicator"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
+            }
+
+            const isEnd = conversationMessages.length > 0 &&
+                conversationMessages[conversationMessages.length - 1]?.role === 'ai' &&
+                conversationMessages[conversationMessages.length - 1]?.text.includes('Wonderful');
+
+            let micStatus = '';
+            let micHint = 'Hold to speak';
+            let micIcon = '🎙️';
+            let micClass = 'mic-button';
+            let micDisabled = false;
+
+            if (isRecording) { micClass += ' recording'; micStatus = 'I\'m listening...'; micHint = 'Listening...'; micIcon = '🎙️'; }
+            else if (isDemoMode && conversationMessages.length < 5) { micStatus = '💬 Demo conversation — showing the flow'; micHint = 'Demo mode'; micIcon = '▶️'; micDisabled = true; }
+            else if (isEnd) { micStatus = '🎉 Conversation complete!'; micHint = 'Done!'; micIcon = '✅'; micDisabled = true; }
+            else {
+                const lastMessage = conversationMessages.length > 0 ? conversationMessages[conversationMessages.length - 1] : null;
+                if (lastMessage?.role === 'ai') { micStatus = 'Say something...'; micHint = 'Hold to speak'; micIcon = '🎙️'; }
+                else if (isProcessing) { micStatus = 'AI is thinking...'; micHint = 'Wait...'; micIcon = '⏳'; micDisabled = true; }
+            }
+
+            const statusClass = isRecording ? 'mic-status listening' : 'mic-status';
+
+            container.innerHTML = `
+                <div class="speak-header"><span class="speak-counter">🎙️ Conversation</span></div>
+                <div class="speak-conversation" id="speakConversation">${messagesHTML}</div>
+                <div class="speak-mic-area">
+                    <button class="${micClass}" id="micButton" onclick="toggleRecording()" ${micDisabled ? 'disabled' : ''}>
+                        <span id="micIcon">${micIcon}</span>
+                        ${isRecording ? '<span class="pulse-ring"></span>' : ''}
+                    </button>
+                    <span class="mic-hint">${micHint}</span>
+                    <span class="${statusClass}" id="micStatus">${micStatus}</span>
+                </div>
+                <div class="speak-footer">
+                    <button class="btn-secondary" onclick="goTo('s-action')">← Action</button>
+                    ${!isEnd ? `<button class="btn-primary" onclick="skipConversation()">Skip →</button>` : `<button class="btn-primary" onclick="goTo('s-completion')">Done →</button>`}
+                </div>
+            `;
+
+            const conv = document.getElementById('speakConversation');
+            if (conv) { conv.scrollTop = conv.scrollHeight; }
+
+            if (isDemoMode && conversationMessages.length === 0) { setTimeout(() => playDemoStep(), 500); }
+        }
+
+        function playDemoStep() {
+            if (!isDemoMode) return;
+            if (demoIndex >= DEMO_CONVERSATION.length) { isDemoMode = false; renderSpeak(); return; }
+            const msg = DEMO_CONVERSATION[demoIndex];
+
+            if (msg.role === 'ai' && demoIndex > 0) {
+                isTyping = true;
+                renderSpeak();
+                setTimeout(() => {
+                    isTyping = false;
+                    addMessage(msg.role, msg.text, msg.correction, msg.perfect);
+                    if (msg.correction) { const lastMsg = conversationMessages[conversationMessages.length - 1]; if (lastMsg) { lastMsg.suggestion = msg.suggestion; } }
+                    demoIndex++;
+                    renderSpeak();
+                    if (msg.role === 'ai' && msg.text) { setTimeout(() => speakText(msg.text), 250); }
+                    setTimeout(() => playDemoStep(), 1300 + Math.random() * 600);
+                }, 800 + Math.random() * 400);
+            } else {
+                addMessage(msg.role, msg.text, msg.correction, msg.perfect);
+                if (msg.correction) { const lastMsg = conversationMessages[conversationMessages.length - 1]; if (lastMsg) { lastMsg.suggestion = msg.suggestion; } }
+                demoIndex++;
+                renderSpeak();
+                setTimeout(() => playDemoStep(), 1000 + Math.random() * 400);
+            }
+        }
+
+        function addMessage(role, text, correction = null, perfect = null, suggestion = null) {
+            const msg = { role, text, correction, perfect };
+            if (suggestion) msg.suggestion = suggestion;
+            conversationMessages.push(msg);
+        }
+
+        function addAIMessage(text) { addMessage('ai', text); }
+        function addLearnerMessage(text, correction = null, perfect = null) { addMessage('learner', text, correction, perfect); }
+        function showTyping(show) { isTyping = show; renderSpeak(); }
+
+        function getCurrentAIStage() {
+            const learnerCount = conversationMessages.filter(m => m.role === 'learner').length;
+            const lastLearner = conversationMessages.filter(m => m.role === 'learner').pop();
+            if (lastLearner && lastLearner.correction) { return Math.min(learnerCount, CONVERSATION_FLOW.length - 1); }
+            return Math.min(learnerCount + 1, CONVERSATION_FLOW.length - 1);
+        }
+
+        function processLearnerResponse(text) {
+            isProcessing = true;
+            const currentStage = Math.min(getCurrentAIStage(), CONVERSATION_FLOW.length - 1);
+            const flow = CONVERSATION_FLOW[currentStage];
+
+            let correction = null;
+            let perfect = null;
+
+            if (flow.correction) { const result = flow.correction.detect(text); if (result) { correction = result.message; } }
+
+            if (!correction && flow.expected) {
+                const found = flow.expected.some(word => text.toLowerCase().includes(word));
+                if (found) { perfect = '✓ Perfect! ✨'; } else if (text.length > 3) { perfect = '👍 Got it!'; }
+            }
+
+            if (!correction && !perfect && text.length > 2) { perfect = '👍 Got it!'; }
+
+            addLearnerMessage(text, correction, perfect);
+
+            if (correction) {
+                isProcessing = false;
+                if (flow.correction && flow.correction.suggestion) { setTimeout(() => speakText(flow.correction.suggestion), 250); }
+                setTimeout(() => renderSpeak(), 250);
+                return;
+            }
+
+            const nextStage = currentStage + 1;
+            if (nextStage < CONVERSATION_FLOW.length) {
+                const nextFlow = CONVERSATION_FLOW[nextStage];
+                showTyping(true);
+                setTimeout(() => {
+                    showTyping(false);
+                    addAIMessage(nextFlow.ai);
+                    conversationStage = nextStage;
+                    isProcessing = false;
+                    renderSpeak();
+                    setTimeout(() => speakText(nextFlow.ai), 250);
+                }, 900 + Math.random() * 400);
+            } else {
+                conversationStage = CONVERSATION_FLOW.length - 1;
+                isProcessing = false;
+                setTimeout(() => renderSpeak(), 400);
+            }
+        }
+
+        function toggleRecording() {
+            if (isDemoMode) { isDemoMode = false; renderSpeak(); return; }
+            if (isRecording) { stopListening(); } else { startListening(); }
+        }
+
+        function startListening() {
+            if (isRecording || isProcessing || isDemoMode) return;
+            const lastMessage = conversationMessages.length > 0 ? conversationMessages[conversationMessages.length - 1] : null;
+            if (lastMessage && lastMessage.role !== 'ai') return;
+            const currentStage = Math.min(conversationStage, CONVERSATION_FLOW.length - 1);
+            if (CONVERSATION_FLOW[currentStage]?.isEnd) return;
+
+            isRecording = true;
+            renderSpeak();
+
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.lang = 'en-US';
+                recognition.interimResults = true;
+                recognition.continuous = false;
+                recognition.maxAlternatives = 3;
+
+                let finalTranscript = '';
+
+                recognition.onresult = function(event) {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                        if (event.results[i].isFinal) { finalTranscript = transcript; }
+                    }
+                    const statusEl = document.getElementById('micStatus');
+                    if (statusEl) { statusEl.textContent = finalTranscript ? ('✏️ ' + finalTranscript) : '🎙️ Listening...'; }
+                };
+
+                recognition.onspeechend = function() {
+                    if (finalTranscript) { stopListening(); setTimeout(() => { processLearnerResponse(finalTranscript); }, 250); }
+                    else {
+                        stopListening();
+                        const statusEl = document.getElementById('micStatus');
+                        if (statusEl) statusEl.textContent = '❌ Could not hear you. Try again.';
+                        setTimeout(() => { renderSpeak(); }, 1000);
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    stopListening();
+                    const statusEl = document.getElementById('micStatus');
+                    if (statusEl) {
+                        if (event.error === 'not-allowed') statusEl.textContent = '⚠️ Please allow microphone access.';
+                        else if (event.error === 'no-speech') statusEl.textContent = '❌ No speech detected. Try again.';
+                        else statusEl.textContent = '❌ Error. Try again.';
+                    }
+                    setTimeout(() => { renderSpeak(); }, 1200);
+                };
+
+                recognition.start();
+                const statusEl = document.getElementById('micStatus');
+                if (statusEl) statusEl.textContent = '🎙️ Listening...';
+            } else {
+                const statusEl = document.getElementById('micStatus');
+                if (statusEl) statusEl.textContent = '💬 Type your response...';
+                const response = prompt('Say something (simulated):');
+                if (response && response.trim()) { stopListening(); processLearnerResponse(response.trim()); }
+                else { stopListening(); if (statusEl) statusEl.textContent = 'No response. Try again.'; setTimeout(() => renderSpeak(), 600); }
+            }
+        }
+
+        function stopListening() {
+            isRecording = false;
+            if (recognition) { try { recognition.stop(); } catch (e) {} recognition = null; }
+            renderSpeak();
+        }
+
+        function speakText(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.rate = 0.85;
+            utter.pitch = 1.0;
+            window.speechSynthesis.speak(utter);
+        }
+
+        function speak(text) {
+            if (!window.speechSynthesis) return;
+            window.speechSynthesis.cancel();
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.rate = 0.85;
+            utter.pitch = 1.0;
+            window.speechSynthesis.speak(utter);
+        }
+
+        function skipConversation() {
+            if (isProcessing) return;
+            if (isDemoMode) { isDemoMode = false; renderSpeak(); return; }
+            const currentStage = Math.min(conversationStage, CONVERSATION_FLOW.length - 1);
+            const nextStage = currentStage + 1;
+            if (nextStage < CONVERSATION_FLOW.length) {
+                const nextFlow = CONVERSATION_FLOW[nextStage];
+                showTyping(true);
+                setTimeout(() => {
+                    showTyping(false);
+                    addAIMessage(nextFlow.ai);
+                    conversationStage = nextStage;
+                    renderSpeak();
+                    setTimeout(() => speakText(nextFlow.ai), 250);
+                }, 600);
+            } else { conversationStage = CONVERSATION_FLOW.length - 1; renderSpeak(); }
+        }
+
+        // ============================================================
+        // COMPLETION
+        // ============================================================
+
+        function renderCompletion() {
+            const container = document.getElementById('completion-content');
+            const explored = WALK_ORDER.filter(k => exploredWalks[k]);
+            const total = WALK_ORDER.length;
+            const allExplored = explored.length === total;
+
+            container.innerHTML = `
+                <div style="font-size:48px; margin-bottom:4px;">${allExplored ? '🎉' : '🌱'}</div>
+                <div class="comp-title">${allExplored ? 'You\'ve completed the Kitchen Walk!' : 'Keep walking through the Kitchen'}</div>
+                <div class="comp-sub">${allExplored ? 'You now know the places in a kitchen.' : `You've explored ${explored.length} of ${total} areas. Keep going!`}</div>
+                <div class="comp-list">
+                    ${WALK_ORDER.map(k => { const data = WALK_DATA[k]; const done = exploredWalks[k]; return `<span class="item" style="${done ? 'background:rgba(58,42,26,0.1);' : 'opacity:0.4;'}">${done ? '✓' : '○'} ${data.emoji} ${data.title}</span>`; }).join('')}
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:6px;">
+                    <button class="btn-secondary" onclick="goTo('s-kitchen-entrance')">← Kitchen</button>
+                    ${allExplored ? `<button class="btn-primary" onclick="showPlaceholder('s-completion')">Next Room →</button>` : `<button class="btn-primary" onclick="goTo('s-kitchen-entrance')">Continue Exploring</button>`}
+                </div>
+            `;
+        }
+
+        // ============================================================
+        // OVERRIDE
+        // ============================================================
+
+        const originalGoTo = goTo;
+        goTo = function(id) {
+            if (id === 's-completion') { renderCompletion(); }
+            originalGoTo(id);
+        };
+
+        // ============================================================
+        // LANDING CAROUSEL TOUCH
+        // ============================================================
+
+        const hero = document.getElementById('heroCanvas');
+        const track = document.getElementById('heroTrack');
+        let isDragging = false;
+        let startX = 0;
+        let currentX = 0;
+        let startOffset = 0;
+
+        hero.addEventListener('touchstart', (e) => {
+            if (isAnimating) return;
+            isDragging = true;
+            startX = e.touches[0].clientX;
+            currentX = startX;
+            startOffset = -currentWorldIndex * 100;
+            track.style.transition = 'none';
+        }, { passive: true });
+
+        hero.addEventListener('touchmove', (e) => {
+            if (!isDragging || isAnimating) return;
+            currentX = e.touches[0].clientX;
+            const diff = (currentX - startX) / hero.offsetWidth * 100;
+            let newOffset = startOffset + diff;
+            newOffset = Math.max(-(WORLDS.length - 1) * 100, Math.min(0, newOffset));
+            track.style.transform = `translateX(${newOffset}%)`;
+        }, { passive: true });
+
+        hero.addEventListener('touchend', (e) => {
+            if (!isDragging || isAnimating) { isDragging = false; return; }
+            isDragging = false;
+            const diff = currentX - startX;
+            track.style.transition = 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+
+            if (Math.abs(diff) > 30) {
+                const direction = diff < 0 ? 1 : -1;
+                let newIndex = Math.max(0, Math.min(WORLDS.length - 1, currentWorldIndex + direction));
+                const targetChip = document.querySelector(`.world-item[data-world="${WORLDS[newIndex]}"]`);
+                if (targetChip && targetChip.classList.contains('coming')) {
+                    targetChip.style.transition = 'all 0.2s ease';
+                    targetChip.style.opacity = '0.5';
+                    setTimeout(() => { targetChip.style.opacity = ''; }, 300);
+                    goToWorld(currentWorldIndex);
+                    return;
+                }
+                goToWorld(newIndex);
+            } else {
+                goToWorld(currentWorldIndex);
+            }
+        }, { passive: true });
+
+        hero.addEventListener('mousedown', (e) => {
+            if (isAnimating) return;
+            isDragging = true;
+            startX = e.clientX;
+            currentX = startX;
+            startOffset = -currentWorldIndex * 100;
+            track.style.transition = 'none';
+            hero.style.cursor = 'grabbing';
+        });
+
+        hero.addEventListener('mousemove', (e) => {
+            if (!isDragging || isAnimating) return;
+            currentX = e.clientX;
+            const diff = (currentX - startX) / hero.offsetWidth * 100;
+            let newOffset = startOffset + diff;
+            newOffset = Math.max(-(WORLDS.length - 1) * 100, Math.min(0, newOffset));
+            track.style.transform = `translateX(${newOffset}%)`;
+        });
+
+        hero.addEventListener('mouseup', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            hero.style.cursor = 'grab';
+            const diff = currentX - startX;
+            track.style.transition = 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+
+            if (Math.abs(diff) > 30) {
+                const direction = diff < 0 ? 1 : -1;
+                let newIndex = Math.max(0, Math.min(WORLDS.length - 1, currentWorldIndex + direction));
+                const targetChip = document.querySelector(`.world-item[data-world="${WORLDS[newIndex]}"]`);
+                if (targetChip && targetChip.classList.contains('coming')) {
+                    targetChip.style.transition = 'all 0.2s ease';
+                    targetChip.style.opacity = '0.5';
+                    setTimeout(() => { targetChip.style.opacity = ''; }, 300);
+                    goToWorld(currentWorldIndex);
+                    return;
+                }
+                goToWorld(newIndex);
+            } else {
+                goToWorld(currentWorldIndex);
+            }
+        });
+
+        hero.addEventListener('mouseleave', () => {
+            if (isDragging) {
+                isDragging = false;
+                hero.style.cursor = 'grab';
+                track.style.transition = 'transform 0.6s cubic-bezier(0.22, 1, 0.36, 1)';
+                goToWorld(currentWorldIndex);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                const newIndex = Math.max(0, currentWorldIndex - 1);
+                const targetChip = document.querySelector(`.world-item[data-world="${WORLDS[newIndex]}"]`);
+                if (targetChip && targetChip.classList.contains('coming')) return;
+                goToWorld(newIndex);
+            } else if (e.key === 'ArrowRight') {
+                const newIndex = Math.min(WORLDS.length - 1, currentWorldIndex + 1);
+                const targetChip = document.querySelector(`.world-item[data-world="${WORLDS[newIndex]}"]`);
+                if (targetChip && targetChip.classList.contains('coming')) return;
+                goToWorld(newIndex);
+            }
+        });
+
+        // ============================================================
+        // INIT
+        // ============================================================
+
+        goToWorld(0);
+        goTo('s-landing');
+
+        console.log('🍳 WordWalk — Complete App');
+        console.log('🏠 Landing: Carousel of worlds');
+        console.log('⚡ Action: 8 "Who am I?" riddle puzzles');
+        console.log('🎙️ Speak: Natural conversation with AI');
+        console.log('🌱 Just walking, just talking.');
+    </script>
+
+</body>
+</html>
